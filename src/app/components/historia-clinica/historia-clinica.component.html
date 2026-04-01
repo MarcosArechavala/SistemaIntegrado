@@ -1,0 +1,1611 @@
+<style>
+    /* 1. Por defecto, ocultamos el reporte en pantalla */
+    .printable-report { 
+        display: none; 
+    }
+
+    /* 2. Configuración específica para Impresión */
+    @media print {
+        
+        /* A. Reseteos obligatorios para evitar cortes de hoja */
+        html, body {
+            height: auto !important;
+            overflow: visible !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: white !important;
+        }
+
+        /* B. Ocultar TODO lo que sea de la interfaz de usuario */
+        /* Ocultamos los componentes estructurales principales de Angular y del Wrapper */
+        app-sainnavv-wrapper header,    /* El encabezado azul/blanco de la app */
+        app-sainnavv-wrapper aside,     /* La barra lateral de pasos */
+        main > div > div:first-child,   /* El contenedor blanco del formulario */
+        .controls-area,                 /* Botoneras */
+        .no-print, 
+        button,                         /* Ocultar botones residuales */
+        section {                       /* Las secciones del form interactivo */
+            display: none !important;
+        }
+
+        /* C. Mostrar SOLO el reporte */
+        .printable-report {
+            display: block !important;
+            position: relative !important; /* Importante: NO absolute para que calcule el alto */
+            width: 100% !important;
+            height: auto !important;
+            z-index: 9999;
+            background-color: white !important;
+            color: black !important;
+            font-family: 'Times New Roman', serif;
+            padding: 20px 40px !important; /* Márgenes internos del papel */
+        }
+
+        /* D. Estilos de Formato del Reporte */
+        .report-header { 
+            border-bottom: 3px solid #000; 
+            margin-bottom: 25px; 
+            padding-bottom: 15px; 
+        }
+        
+        .report-section { 
+            margin-bottom: 25px; 
+            /* Evitar que una sección se parta a la mitad entre dos hojas */
+            break-inside: avoid; 
+            page-break-inside: avoid;
+        }
+
+        .report-label { 
+            font-weight: bold; 
+            font-size: 11px; 
+            text-transform: uppercase; 
+            color: #000; 
+            margin-bottom: 2px;
+            display: block;
+        }
+
+        .report-value { 
+            font-size: 13px; 
+            color: #000;
+            padding-bottom: 3px;
+            border-bottom: 1px dotted #999;
+            display: block;
+            min-height: 18px; /* Para que si está vacío ocupe espacio igual */
+        }
+
+        /* Forzar impresión de colores de fondo si es necesario */
+        .box { 
+            border: 1px solid #666; 
+            padding: 10px; 
+            border-radius: 4px; 
+            background-color: #f9f9f9 !important; 
+            -webkit-print-color-adjust: exact; 
+            print-color-adjust: exact;
+        }
+
+        /* Ajustes de Grillas para imprimir correctamente */
+        .grid { display: grid !important; }
+        .grid-cols-2 { grid-template-columns: 1fr 1fr !important; }
+        .grid-cols-3 { grid-template-columns: 1fr 1fr 1fr !important; }
+        .gap-4 { gap: 1rem !important; }
+        .gap-6 { gap: 1.5rem !important; }
+        
+        /* Ocultar scrollbars */
+        ::-webkit-scrollbar { display: none; }
+    }
+</style>
+<div class="space-y-12">
+  
+    <!-- STEP 0: Identificación -->
+    <section *ngIf="activeStep === 0" class="animate-in fade-in slide-in-from-bottom-6 duration-500">
+        
+      <div class="mb-12">
+        <h2 class="text-2xl font-black text-slate-900 mb-2">Profesionales Responsables</h2>
+        <p class="text-slate-500 text-sm">Registro del equipo interdisciplinario interviniente</p>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+        <div class="mb-5 group">
+          <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Médico/a</label>
+          <input type="text" [(ngModel)]="formData.medicoInterviniente" [disabled]="isReadOnly"  class="w-full px-4 py-3.5 bg-slate-50 border-2 border-slate-200 rounded-2xl focus:border-indigo-600 outline-none font-bold text-lg shadow-sm">
+        </div>
+        <div class="mb-5 group">
+          <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Trabajador/a Social</label>
+          <input type="text" [(ngModel)]="formData.trabajadorSocial" [disabled]="isReadOnly" class="w-full px-4 py-3.5 bg-slate-50 border-2 border-slate-200 rounded-2xl focus:border-indigo-600 outline-none font-bold text-lg shadow-sm">
+        </div>
+        <div class="mb-5 group">
+            <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Psicólogo/a</label>
+            <input type="text" [(ngModel)]="formData.psicologo" [disabled]="isReadOnly"  class="w-full px-4 py-3.5 bg-slate-50 border-2 border-slate-200 rounded-2xl focus:border-indigo-600 outline-none font-bold text-lg shadow-sm">
+        </div>
+         <div class="mb-5 group">
+            <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Enfermero/a</label>
+            <input type="text" [(ngModel)]="formData.enfermero" [disabled]="isReadOnly"  class="w-full px-4 py-3.5 bg-slate-50 border-2 border-slate-200 rounded-2xl focus:border-indigo-600 outline-none font-bold text-lg shadow-sm">
+        </div>
+      </div>
+  
+       <div class="mb-12 border-t border-slate-100 pt-12">
+        <h2 class="text-2xl font-black text-slate-900 mb-6">Datos Primarios del Paciente</h2>
+        <!-- Buscador de Pacientes -->
+      <div class="mb-8 bg-indigo-50 p-6 rounded-3xl border border-indigo-100 shadow-sm animate-in slide-in-from-top-4">
+        <h3 class="text-sm font-black text-indigo-900 uppercase tracking-widest mb-4 flex items-center">
+             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+             Importar Paciente desde Sistema Central
+        </h3>
+        
+   <div class="flex flex-col md:flex-row gap-4">
+            <!-- Selector Tipo -->
+            <div class="md:w-1/4">
+                <select #tipoBusqueda [disabled]="isReadOnly" class="w-full p-3 bg-white border border-indigo-200 rounded-xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="dni">Por D.N.I.</option>
+                    <option value="hc">Por Historia Clínica</option>
+                </select>
+            </div>
+            
+            <!-- Input Valor (Limpio, solo busca al dar ENTER) -->
+            <div class="md:w-2/4">
+                <input #valorBusqueda 
+                       (keyup.enter)="buscarPaciente(tipoBusqueda.value, valorBusqueda.value)"
+                       placeholder="Ingrese número sin puntos..." 
+                       
+                       class="w-full p-3 bg-white border border-indigo-200 rounded-xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500 placeholder-indigo-300">
+            </div>
+
+            <!-- Botón -->
+            <div class="md:w-1/4">
+                <button (click)="buscarPaciente(tipoBusqueda.value, valorBusqueda.value)" 
+                        
+                        class="w-full h-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all shadow-md flex items-center justify-center">
+                    
+                    <span *ngIf="!buscandoPaciente" class="flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+                        BUSCAR
+                    </span>
+
+                    <span *ngIf="buscandoPaciente" class="flex items-center animate-pulse">
+                        <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        Cargando...
+                    </span>
+                </button>
+            </div>
+        </div>
+        <p class="mt-3 text-[10px] text-indigo-400 font-medium ml-1">* Al encontrar el paciente, los campos de identificación y grupo familiar se completarán automáticamente.</p>
+      </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            
+            
+           <!-- Nombre y Apellido -->
+            <div class="group">
+                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Nombre y Apellido</label>
+                <!-- AGREGADO id="inputNombrePaciente" -->
+                <input id="inputNombrePaciente" 
+                       type="text" 
+                       [(ngModel)]="formData.nombreApellido" 
+                       [disabled]="isReadOnly"
+                       class="w-full px-4 py-3.5 bg-slate-50 border-2 border-slate-200 rounded-2xl font-bold text-lg text-slate-900 outline-none focus:border-indigo-600 focus:bg-white transition-all">
+            </div>
+
+            <!-- Edad -->
+            <div class="group">
+                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Edad</label>
+                <input type="text" [(ngModel)]="formData.edad" 
+                       [disabled]="isReadOnly"
+                       class="w-full px-4 py-3.5 bg-slate-50 border-2 border-slate-200 rounded-2xl font-bold text-lg text-slate-900 outline-none focus:border-indigo-600 focus:bg-white transition-all">
+            </div>
+
+            <!-- Fecha de Nacimiento -->
+            <div class="group">
+                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Fecha de Nacimiento</label>
+                <input type="date" [(ngModel)]="formData.fechaNacimiento" 
+                       [disabled]="isReadOnly"
+                       class="w-full px-4 py-3.5 bg-slate-50 border-2 border-slate-200 rounded-2xl font-bold text-lg text-slate-900 outline-none focus:border-indigo-600 focus:bg-white transition-all">
+            </div>
+
+            <!-- DNI -->
+            <div class="group">
+                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">D.N.I.</label>
+                <input type="text" [(ngModel)]="formData.dni" 
+                       [disabled]="isReadOnly"
+                       class="w-full px-4 py-3.5 bg-slate-50 border-2 border-slate-200 rounded-2xl font-bold text-lg text-slate-900 outline-none focus:border-indigo-600 focus:bg-white transition-all">
+            </div>
+
+            <!-- Domicilio (Ocupa 2 columnas para ser más largo) -->
+            <div class="group md:col-span-2">
+                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Domicilio</label>
+                <input type="text" [(ngModel)]="formData.domicilio" 
+                       [disabled]="isReadOnly"
+                       class="w-full px-4 py-3.5 bg-slate-50 border-2 border-slate-200 rounded-2xl font-bold text-lg text-slate-900 outline-none focus:border-indigo-600 focus:bg-white transition-all">
+            </div>
+
+            <!-- Centro de Salud -->
+            <div class="group md:col-span-2">
+                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Centro de Salud al que concurren</label>
+                <input type="text" [(ngModel)]="formData.centroSalud" 
+                       [disabled]="isReadOnly"
+                       placeholder="Nombre del centro..."
+                       class="w-full px-4 py-3.5 bg-slate-50 border-2 border-slate-200 rounded-2xl font-bold text-lg text-slate-900 outline-none focus:border-indigo-600 focus:bg-white transition-all">
+            </div>
+
+            <!-- Último control -->
+            <div class="group">
+                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Último control de salud</label>
+                <input type="text" [(ngModel)]="formData.ultimoControl" 
+                       [disabled]="isReadOnly"
+                       placeholder="Fecha o dato..."
+                       class="w-full px-4 py-3.5 bg-slate-50 border-2 border-slate-200 rounded-2xl font-bold text-lg text-slate-900 outline-none focus:border-indigo-600 focus:bg-white transition-all">
+            </div>
+
+            <!-- Obra Social -->
+            <div class="md:col-span-3 mt-4">
+                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Obra Social</label>
+                <div class="flex flex-col md:flex-row items-center gap-4 bg-slate-50 p-4 rounded-2xl border-2 border-slate-200">
+                    <div class="flex gap-6">
+                        <label class="flex items-center cursor-pointer font-bold text-base text-slate-700">
+                            <input type="radio" [value]="true" [(ngModel)]="formData.obraSocial" [disabled]="isReadOnly" class="w-6 h-6 mr-3 text-indigo-600 focus:ring-indigo-500"/> 
+                            SI
+                        </label>
+                        <label class="flex items-center cursor-pointer font-bold text-base text-slate-700">
+                            <input type="radio" [value]="false" [(ngModel)]="formData.obraSocial" class="w-6 h-6 mr-3 text-indigo-600 focus:ring-indigo-500"/> 
+                            NO
+                        </label>
+                    </div>
+                    
+                    <!-- Campo "Cuál" aparece si elige SI -->
+                    <div *ngIf="formData.obraSocial" class="flex-1 w-full animate-in slide-in-from-left-2">
+                        <div class="flex items-center">
+                            <span class="mr-3 font-bold text-slate-500 whitespace-nowrap">¿Cuál?</span>
+                            <input [(ngModel)]="formData.cualObraSocial" 
+                                   [disabled]="isReadOnly"
+
+                                   class="w-full px-4 py-2 bg-white border-2 border-indigo-200 rounded-xl text-base font-bold text-indigo-900 outline-none focus:border-indigo-500">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    </section>
+  
+   <!-- STEP 1: Grupo Familiar (Visual Paso 2) -->
+    <section *ngIf="activeStep === 1" class="animate-in fade-in slide-in-from-bottom-6 duration-500">
+        
+        <div class="mb-10">
+            <h2 class="text-2xl font-black text-slate-900 mb-2">Contexto Familiar</h2>
+            <p class="text-slate-500 text-sm">Información de convivientes y referentes adultos</p>
+        </div>
+
+        <!-- 1. TABLA DINÁMICA: Grupo Familiar Conviviente -->
+        <div class="bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm mb-10 overflow-hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-black text-slate-800 flex items-center">
+                    <span class="bg-indigo-100 p-2 rounded-lg text-indigo-700 mr-3">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                    </span>
+                    Grupo Familiar Conviviente
+                </h3>
+                <button (click)="addConviviente()" [disabled]="isReadOnly" class="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center">
+                    + Agregar Miembro
+                </button>
+            </div>
+
+            <!-- Tabla Desktop / Tarjetas Mobile -->
+            <div class="space-y-4">
+                <!-- Header (Solo visible en pantallas medianas+) -->
+                <div  class="hidden md:grid grid-cols-12 gap-2 text-[10px] uppercase font-bold text-slate-400 px-4" >
+                    <div class="col-span-3">Nombre y Apellido</div>
+                    <div class="col-span-2">Vínculo</div>
+                    <div class="col-span-1">Edad</div>
+                    <div class="col-span-3">Escuela / Ocupación</div>
+                    <div class="col-span-2">Observaciones</div>
+                    <div class="col-span-1"></div>
+                </div>
+
+                <!-- Lista de convivientes -->
+                <div *ngFor="let item of formData.otrosConvivientes; let i = index" class="animate-in slide-in-from-left-2">
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 grid grid-cols-1 md:grid-cols-12 gap-3 items-start">
+                        <!-- Inputs Mobile/Desktop responsive -->
+                        <div class="col-span-1 md:col-span-3">
+                             <input placeholder="Nombre..." [(ngModel)]="item.nombre" [disabled]="isReadOnly" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-bold text-slate-700 outline-none focus:border-indigo-500">
+                        </div>
+                        <div class="col-span-1 md:col-span-2">
+                             <input placeholder="Vínculo" [(ngModel)]="item.vinculo" [disabled]="isReadOnly" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 outline-none focus:border-indigo-500">
+                        </div>
+                        <div class="col-span-1 md:col-span-1">
+                             <input placeholder="Edad" [(ngModel)]="item.edad" [disabled]="isReadOnly" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 outline-none focus:border-indigo-500">
+                        </div>
+                        <div class="col-span-1 md:col-span-3">
+                             <input placeholder="Escuela/Ocup." [(ngModel)]="item.ocupacion" [disabled]="isReadOnly" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 outline-none focus:border-indigo-500">
+                        </div>
+                        <div class="col-span-1 md:col-span-2">
+                             <input placeholder="Obs..." [(ngModel)]="item.observaciones" [disabled]="isReadOnly" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 outline-none focus:border-indigo-500">
+                        </div>
+                        <div class="col-span-1 md:col-span-1 flex justify-center">
+                            <button (click)="removeConviviente(i)" class="text-rose-400 hover:text-rose-600 hover:bg-rose-50 p-2 rounded-lg transition-colors" title="Eliminar fila" [disabled]="isReadOnly">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div  *ngIf="formData.otrosConvivientes.length === 0" class="text-center py-8 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 text-slate-400 text-sm">
+                    No se han registrado convivientes aún.
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. DATOS DE PROGENITORES -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+            
+            <!-- MADRE -->
+            <div class="bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm relative overflow-hidden group hover:border-pink-300 transition-colors">
+                <div class="absolute top-0 left-0 w-1.5 h-full bg-pink-400"></div>
+                <h3 class="text-lg font-black text-pink-700 mb-6 pl-4 uppercase tracking-wider">Datos de la Madre</h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-[10px] uppercase font-bold text-slate-400 ml-1">Nombre y Apellido</label>
+                        <input [(ngModel)]="formData.madre.nombre"  [disabled]="isReadOnly" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold text-slate-800 focus:bg-white focus:border-pink-400 outline-none">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-[10px] uppercase font-bold text-slate-400 ml-1">Edad</label>
+                            <input [(ngModel)]="formData.madre.edad" [disabled]="isReadOnly" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold text-slate-800 focus:bg-white focus:border-pink-400 outline-none">
+                        </div>
+                        <div>
+                            <label class="text-[10px] uppercase font-bold text-slate-400 ml-1">D.N.I</label>
+                            <input [(ngModel)]="formData.madre.dni" [disabled]="isReadOnly" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold text-slate-800 focus:bg-white focus:border-pink-400 outline-none">
+                        </div>
+                    </div>
+                    <div>
+                         <label class="text-[10px] uppercase font-bold text-slate-400 ml-1">Nivel Instrucción</label>
+                         <input [(ngModel)]="formData.madre.nivelInstruccion" [disabled]="isReadOnly" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold text-slate-800 focus:bg-white focus:border-pink-400 outline-none">
+                    </div>
+                    <div>
+                         <label class="text-[10px] uppercase font-bold text-slate-400 ml-1">Ocupación</label>
+                         <input [(ngModel)]="formData.madre.ocupacion" [disabled]="isReadOnly" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold text-slate-800 focus:bg-white focus:border-pink-400 outline-none">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                         <div>
+                            <label class="text-[10px] uppercase font-bold text-slate-400 ml-1">Domicilio</label>
+                            <input [(ngModel)]="formData.madre.domicilio" [disabled]="isReadOnly" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold text-slate-800 focus:bg-white focus:border-pink-400 outline-none">
+                         </div>
+                         <div>
+                            <label class="text-[10px] uppercase font-bold text-slate-400 ml-1">Celular</label>
+                            <input [(ngModel)]="formData.madre.cel" [disabled]="isReadOnly" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold text-slate-800 focus:bg-white focus:border-pink-400 outline-none">
+                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PADRE -->
+            <div class="bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm relative overflow-hidden group hover:border-sky-300 transition-colors">
+                <div class="absolute top-0 left-0 w-1.5 h-full bg-sky-500"></div>
+                <h3 class="text-lg font-black text-sky-700 mb-6 pl-4 uppercase tracking-wider">Datos del Padre</h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-[10px] uppercase font-bold text-slate-400 ml-1">Nombre y Apellido</label>
+                        <input [(ngModel)]="formData.padre.nombre" [disabled]="isReadOnly" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold text-slate-800 focus:bg-white focus:border-sky-400 outline-none">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-[10px] uppercase font-bold text-slate-400 ml-1">Edad</label>
+                            <input [(ngModel)]="formData.padre.edad" [disabled]="isReadOnly" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold text-slate-800 focus:bg-white focus:border-sky-400 outline-none">
+                        </div>
+                        <div>
+                            <label class="text-[10px] uppercase font-bold text-slate-400 ml-1">D.N.I</label>
+                            <input [(ngModel)]="formData.padre.dni" [disabled]="isReadOnly" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold text-slate-800 focus:bg-white focus:border-sky-400 outline-none">
+                        </div>
+                    </div>
+                    <div>
+                         <label class="text-[10px] uppercase font-bold text-slate-400 ml-1">Nivel Instrucción</label>
+                         <input [(ngModel)]="formData.padre.nivelInstruccion" [disabled]="isReadOnly" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold text-slate-800 focus:bg-white focus:border-sky-400 outline-none">
+                    </div>
+                    <div>
+                         <label class="text-[10px] uppercase font-bold text-slate-400 ml-1">Ocupación</label>
+                         <input [(ngModel)]="formData.padre.ocupacion" [disabled]="isReadOnly" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold text-slate-800 focus:bg-white focus:border-sky-400 outline-none">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                         <div>
+                            <label class="text-[10px] uppercase font-bold text-slate-400 ml-1">Domicilio</label>
+                            <input [(ngModel)]="formData.padre.domicilio" [disabled]="isReadOnly" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold text-slate-800 focus:bg-white focus:border-sky-400 outline-none">
+                         </div>
+                         <div>
+                            <label class="text-[10px] uppercase font-bold text-slate-400 ml-1">Celular</label>
+                            <input [(ngModel)]="formData.padre.cel" [disabled]="isReadOnly" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold text-slate-800 focus:bg-white focus:border-sky-400 outline-none">
+                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. ACOMPAÑANTE -->
+        <div class="bg-indigo-900 text-white p-8 rounded-[32px] border border-slate-200 shadow-2xl shadow-indigo-200/50">
+            <h3 class="text-xl font-black mb-6 flex items-center">
+                 Acompañante de la Consulta
+            </h3>
+
+            <!-- Checkboxes de Selección -->
+            <div class="flex flex-wrap gap-4 mb-8">
+                 <label class="cursor-pointer bg-indigo-800 hover:bg-indigo-700 px-6 py-3 rounded-xl border border-indigo-600 flex items-center transition-all">
+                     <input type="checkbox" 
+                            [disabled]="isReadOnly"
+                            [checked]="formData.acompananteTipo.includes('Madre')" 
+                            (change)="handleCheckboxList('acompananteTipo', 'Madre')"
+                            class="w-5 h-5 rounded border-indigo-400 text-indigo-500 focus:ring-offset-indigo-900 focus:ring-white">
+                     <span class="ml-3 font-bold uppercase tracking-wider text-sm">Madre</span>
+                 </label>
+                 <label class="cursor-pointer bg-indigo-800 hover:bg-indigo-700 px-6 py-3 rounded-xl border border-indigo-600 flex items-center transition-all">
+                    <input type="checkbox" 
+                           [disabled]="isReadOnly"
+                           [checked]="formData.acompananteTipo.includes('Padre')" 
+                           (change)="handleCheckboxList('acompananteTipo', 'Padre')"
+                           class="w-5 h-5 rounded border-indigo-400 text-indigo-500 focus:ring-offset-indigo-900 focus:ring-white">
+                    <span class="ml-3 font-bold uppercase tracking-wider text-sm">Padre</span>
+                 </label>
+                 <label class="cursor-pointer bg-indigo-800 hover:bg-indigo-700 px-6 py-3 rounded-xl border border-indigo-600 flex items-center transition-all">
+                    <input type="checkbox" 
+                           [disabled]="isReadOnly"
+                           [checked]="formData.acompananteTipo.includes('Otro')" 
+                           (change)="handleCheckboxList('acompananteTipo', 'Otro')"
+                           class="w-5 h-5 rounded border-indigo-400 text-indigo-500 focus:ring-offset-indigo-900 focus:ring-white">
+                    <span class="ml-3 font-bold uppercase tracking-wider text-sm">Otro</span>
+                 </label>
+            </div>
+
+            <!-- Campos Condicionales "Otro" -->
+            <div *ngIf="formData.acompananteTipo.includes('Otro')" class="bg-indigo-800/50 p-6 rounded-2xl border border-indigo-500/50 animate-in slide-in-from-bottom-2">
+                 <h4 class="text-xs font-bold text-indigo-300 uppercase mb-4 tracking-widest">Datos del Acompañante (No Progenitor)</h4>
+                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                     <div>
+                         <label class="text-[10px] text-indigo-300 font-bold block mb-1">Nombre y Apellido</label>
+                         <input [(ngModel)]="formData.acompananteNombre" [disabled]="isReadOnly" class="w-full bg-indigo-900/50 border border-indigo-600 rounded-lg px-3 py-2 text-white font-bold outline-none focus:border-white">
+                     </div>
+                     <div>
+                        <label class="text-[10px] text-indigo-300 font-bold block mb-1">Vínculo</label>
+                        <input [(ngModel)]="formData.acompananteVinculo" [disabled]="isReadOnly" class="w-full bg-indigo-900/50 border border-indigo-600 rounded-lg px-3 py-2 text-white font-bold outline-none focus:border-white">
+                    </div>
+                     <div>
+                        <label class="text-[10px] text-indigo-300 font-bold block mb-1">Edad</label>
+                        <input [(ngModel)]="formData.acompananteEdad" [disabled]="isReadOnly" class="w-full bg-indigo-900/50 border border-indigo-600 rounded-lg px-3 py-2 text-white font-bold outline-none focus:border-white">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-indigo-300 font-bold block mb-1">D.N.I.</label>
+                        <input [(ngModel)]="formData.acompananteDni" [disabled]="isReadOnly" class="w-full bg-indigo-900/50 border border-indigo-600 rounded-lg px-3 py-2 text-white font-bold outline-none focus:border-white">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="text-[10px] text-indigo-300 font-bold block mb-1">Nivel de Instrucción</label>
+                        <input [(ngModel)]="formData.acompananteInstruccion" [disabled]="isReadOnly" class="w-full bg-indigo-900/50 border border-indigo-600 rounded-lg px-3 py-2 text-white font-bold outline-none focus:border-white">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-indigo-300 font-bold block mb-1">Domicilio</label>
+                        <input [(ngModel)]="formData.acompananteDomicilio" [disabled]="isReadOnly" class="w-full bg-indigo-900/50 border border-indigo-600 rounded-lg px-3 py-2 text-white font-bold outline-none focus:border-white">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-indigo-300 font-bold block mb-1">Celular</label>
+                        <input [(ngModel)]="formData.acompananteCel" [disabled]="isReadOnly" class="w-full bg-indigo-900/50 border border-indigo-600 rounded-lg px-3 py-2 text-white font-bold outline-none focus:border-white">
+                    </div>
+                 </div>
+            </div>
+
+        </div>
+
+    </section>
+  
+    <!-- STEP 2: Ingreso -->
+    <section *ngIf="activeStep === 2" class="animate-in fade-in slide-in-from-bottom-6 duration-500">
+      <div class="mb-10">
+          <h2 class="text-2xl font-black text-slate-900 mb-2">Ingreso y Evaluación Inicial</h2>
+          <p class="text-slate-500 text-sm">Contexto de la consulta y sospecha diagnóstica</p>
+      </div>
+
+      <div class="grid lg:grid-cols-2 gap-10 mb-12">
+        <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
+          <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-6">Modalidad de Ingreso</label>
+          
+          <div *ngFor="let mod of [{id:'demanda_espontanea', l:'Demanda Espontánea'},{id:'derivacion_institucional', l:'Derivación Institucional'},{id:'interconsulta', l:'Interconsulta de Servicio'}]"
+               (click)="formData.modalidadIngreso = $any(mod.id)"
+               [class]="formData.modalidadIngreso === mod.id ? 'bg-indigo-50 border-indigo-600 ring-4 ring-indigo-500/5' : 'bg-slate-50 border-slate-100 hover:border-slate-300'"
+               class="p-5 rounded-2xl border-2 cursor-pointer mb-4 transition-all">
+               <div class="flex items-center">
+                    <div [class]="formData.modalidadIngreso === mod.id ? 'border-indigo-600' : 'border-slate-300'" class="w-6 h-6 rounded-full border-2 mr-4 flex items-center justify-center">
+                        <div *ngIf="formData.modalidadIngreso === mod.id" class="w-3 h-3 bg-indigo-600 rounded-full"></div>
+                    </div>
+                    <span [class]="formData.modalidadIngreso === mod.id ? 'text-indigo-900' : 'text-slate-600'" class="text-base font-black">{{mod.l}}</span>
+               </div>
+               
+               <!-- Secciones ngIf separadas para evitar conflicto ngModel/Ternario -->
+               <div *ngIf="formData.modalidadIngreso === mod.id">
+                   <input *ngIf="mod.id === 'interconsulta'"
+                          class="mt-4 w-full px-4 py-3 bg-white border-2 border-indigo-200 rounded-xl font-bold animate-in slide-in-from-top-1"
+                          placeholder="¿Qué servicio solicita?"
+                          [(ngModel)]="formData.servicioInterconsulta">
+                    
+                   <input *ngIf="mod.id === 'derivacion_institucional'"
+                          class="mt-4 w-full px-4 py-3 bg-white border-2 border-indigo-200 rounded-xl font-bold animate-in slide-in-from-top-1"
+                          placeholder="¿Qué institución deriva?"
+                          [(ngModel)]="formData.institucionDerivacion">
+               </div>
+          </div>
+        </div>
+
+        <!-- Motivos -->
+        <div class="bg-slate-900 p-8 rounded-3xl shadow-xl shadow-slate-200">
+          <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-4">Motivos Clínicos</label>
+          <textarea [(ngModel)]="formData.motivosConsulta" [disabled]="isReadOnly" class="w-full h-[280px] p-6 border-none rounded-2xl bg-slate-800 text-white font-bold outline-none focus:ring-4 focus:ring-indigo-500 placeholder-slate-600 leading-relaxed shadow-inner" placeholder="Describa el motivo detallado..."></textarea>
+        </div>
+      </div>
+
+      <!-- Diagnostico Checkbox List -->
+     
+<div class="bg-white p-10 rounded-3xl border border-slate-200 shadow-sm mt-12">
+    <div class="flex items-center space-x-4 mb-8 border-b border-slate-50 pb-4">
+        <div class="bg-rose-50 p-2 rounded-lg text-rose-600">
+           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+        </div>
+        <h3 class="text-xl font-black text-slate-800">Diagnóstico Presuntivo (CIE-10)</h3>
+    </div>
+
+    <!-- Lista grid con todos los diagnósticos solicitados -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-6">
+       <label *ngFor="let diag of diagnosisOptions" 
+              class="flex items-center text-base p-3 hover:bg-slate-50 rounded-xl cursor-pointer transition-all border border-transparent hover:border-slate-200 group">
+          
+          <input type="checkbox" 
+                 [checked]="formData.diagnosticoPresuntivo.includes(diag.label)" 
+                 (change)="handleCheckboxList('diagnosticoPresuntivo', diag.label)" 
+                 class="w-6 h-6 mr-4 rounded-lg text-indigo-600 border-slate-300 focus:ring-indigo-500 transition-colors">
+          
+          <span [class]="diag.color" class="font-bold leading-tight group-hover:translate-x-1 transition-transform">
+            {{diag.label}}
+          </span>
+       </label>
+    </div>
+</div>
+    </section>
+    
+    <!-- STEP 3: Intervenciones -->
+    <section *ngIf="activeStep === 3" class="animate-in fade-in slide-in-from-bottom-6 duration-500">
+        <div class="mb-10">
+          <h2 class="text-2xl font-black text-slate-900 mb-2">Evaluación de Riesgo</h2>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-10 mb-12">
+            <!-- Antecedentes -->
+           <!-- Antecedentes -->
+            <div class="lg:col-span-1 space-y-6">
+                <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm h-full flex flex-col">
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-4">Antecedentes</label>
+                    
+                    <!-- Botones Sin/Con -->
+                    <div class="grid grid-cols-1 gap-3 mb-4">
+                         <button (click)="formData.antecedentesServicio = 'sin_antecedentes'" 
+                                 [class]="formData.antecedentesServicio === 'sin_antecedentes' ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-slate-50 text-slate-600 border-slate-200'" 
+                                 class="text-left px-5 py-4 rounded-xl border-2 text-base font-black transition-all">Sin antecedentes previos</button>
+                         <button (click)="formData.antecedentesServicio = 'con_antecedentes'" 
+                                 [class]="formData.antecedentesServicio === 'con_antecedentes' ? 'bg-amber-500 border-amber-500 text-white' : 'bg-slate-50 text-slate-600 border-slate-200'" 
+                                 class="text-left px-5 py-4 rounded-xl border-2 text-base font-black transition-all">Con antecedentes históricos</button>
+                    </div>
+
+                    <!-- Bloque Con Antecedentes -->
+                    <div *ngIf="formData.antecedentesServicio === 'con_antecedentes'" class="animate-in slide-in-from-top-2 flex-1 flex flex-col gap-4">
+                        
+                        <!-- Resumen Texto -->
+                        <div class="flex-1">
+                            <label class="block text-[10px] font-bold text-amber-700 uppercase mb-2">Resumen Clínico</label>
+                            <textarea 
+                                  [(ngModel)]="formData.resumenIntervencionesPrevias" 
+                                  placeholder="Resumen histórico breve..."
+                                  class="w-full p-4 text-sm font-bold bg-amber-50 border-2 border-amber-100 rounded-xl h-32 outline-none text-amber-900 placeholder-amber-400 leading-relaxed shadow-inner"></textarea>
+                        </div>
+
+                        <!-- ZONA DE ADJUNTO -->
+                        <div class="bg-slate-50 p-4 rounded-xl border-2 border-dashed border-slate-200">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 flex items-center justify-between">
+                                Adjuntar Documentación
+                                <span *ngIf="formData.archivoAntecedentes" class="text-emerald-500 font-bold text-xs flex items-center">
+                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                    Cargado
+                                </span>
+                            </label>
+
+                            <!-- Nuevo Input de Descripción -->
+                            <div class="mb-3">
+                                <input type="text" 
+                                       [(ngModel)]="formData.descripcionArchivo"
+                                       placeholder="Nombre/Referencia del archivo (Ej: Historia Clínica 2023)" 
+                                       class="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg outline-none focus:border-indigo-500 font-bold text-slate-700 placeholder-slate-400 transition-all">
+                            </div>
+                            
+                            <!-- Input File Oculto -->
+                            <input [disabled]="isReadOnly" type="file" #pdfInput hidden accept=".pdf" (change)="onFileSelected($event)">
+                            
+                            <!-- Botón Subir (Se muestra si no hay archivo) -->
+                            <button *ngIf="!formData.archivoAntecedentes" 
+                                    (click)="pdfInput.click()" 
+                                    [disabled]="isReadOnly"
+                                    class="w-full py-2.5 px-4 rounded-lg bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 transition-all text-indigo-600 flex items-center justify-center group font-bold text-sm">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                Seleccionar PDF
+                            </button>
+
+                            <!-- Tarjeta de Archivo Cargado (Se muestra si HAY archivo) -->
+                            <div  *ngIf="formData.archivoAntecedentes" class="flex items-center justify-between bg-white border border-indigo-200 p-2 rounded-lg shadow-sm">
+                                <div class="flex items-center overflow-hidden">
+                                    <div class="bg-red-50 p-1.5 rounded text-red-600 mr-2 flex-shrink-0">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H9z" /><path d="M3 8a2 2 0 012-2v10h8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" /></svg>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <p class="text-xs font-bold text-slate-800 truncate" title="{{formData.archivoAntecedentes}}">
+                                            {{formData.archivoAntecedentes}}
+                                        </p>
+                                    </div>
+                                </div>
+                                <button (click)="removeFile()" class="ml-2 text-slate-400 hover:text-red-500 transition-colors p-1" title="Eliminar">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            
+        </div>
+
+         <section *ngIf="activeStep === 3" class="animate-in fade-in slide-in-from-bottom-6 duration-500">
+        <div class="mb-8">
+            <h2 class="text-2xl font-black text-slate-900 mb-2">Registro de Intervenciones</h2>
+            <p class="text-slate-500 text-sm">Cronología de actuaciones y modalidades de abordaje</p>
+        </div>
+
+        <div class="bg-white p-8 rounded-[32px] border border-slate-200 shadow-sm mb-10">
+            <h3 class="text-lg font-bold text-slate-800 uppercase tracking-widest mb-6 border-b border-slate-100 pb-4">
+                Intervenciones Realizadas (Selección Múltiple)
+            </h3>
+
+            <div class="grid grid-cols-1 gap-y-8">
+                
+                <!-- Grupo 1: Entrevistas Estándar -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Entrevista Admisión Referente -->
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                        <label class="flex flex-col h-full justify-between">
+                            <span class="text-sm font-bold text-slate-600 mb-3 flex items-center">
+                                <div class="w-2 h-2 rounded-full bg-indigo-500 mr-2"></div>
+                                Entrevista Admisión c/ Referente Familiar
+                            </span>
+                            <input [disabled]="isReadOnly" type="date" [(ngModel)]="formData.intervenciones.admisionReferente" 
+                                   class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 transition-all outline-none">
+                        </label>
+                    </div>
+
+                    <!-- Virtual Institucional -->
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                        <label class="flex flex-col h-full justify-between">
+                            <span class="text-sm font-bold text-slate-600 mb-3 flex items-center">
+                                <div class="w-2 h-2 rounded-full bg-purple-500 mr-2"></div>
+                                Virtual Institucional
+                            </span>
+                            <input type="date" [(ngModel)]="formData.intervenciones.virtualInstitucional" 
+                                   class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:ring-2 focus:ring-purple-500 transition-all outline-none">
+                        </label>
+                    </div>
+
+                    <!-- Entrevista con la referente -->
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                        <label class="flex flex-col h-full justify-between">
+                            <span class="text-sm font-bold text-slate-600 mb-3 flex items-center">
+                                <div class="w-2 h-2 rounded-full bg-indigo-500 mr-2"></div>
+                                Entrevista con Referente Familiar
+                            </span>
+                            <input type="date" [(ngModel)]="formData.intervenciones.referenteFamiliar" 
+                                   [disabled]="isReadOnly" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 transition-all outline-none">
+                        </label>
+                    </div>
+
+                    <!-- Afectivo -->
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                        <label class="flex flex-col h-full justify-between">
+                            <span class="text-sm font-bold text-slate-600 mb-3 flex items-center">
+                                <div class="w-2 h-2 rounded-full bg-pink-500 mr-2"></div>
+                                Vinculación / Afectivo
+                            </span>
+                            <input type="date" [(ngModel)]="formData.intervenciones.afectivo" 
+                                      [disabled]="isReadOnly"
+                                   class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:ring-2 focus:ring-pink-500 transition-all outline-none">
+                        </label>
+                    </div>
+                </div>
+
+                <div class="h-px bg-slate-100 my-2"></div>
+
+                <!-- Grupo 2: Niños/Adolescentes (Hora de juego) -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8" >
+                     <!-- Hora de Juego (Con selectores) -->
+                    <div class="bg-indigo-50/50 p-5 rounded-2xl border border-indigo-100 relative group hover:border-indigo-300 transition-colors">
+                        <span  class="text-sm font-black text-indigo-900 mb-4 block uppercase tracking-wider">Hora de Juego</span>
+                        
+                        <!-- Toggle Niña/Niño -->
+                        <div class="flex gap-3 mb-4">
+                            <button (click)="formData.intervenciones.horaJuego = 'niña'"
+                                    [class]="formData.intervenciones.horaJuego === 'niña' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'bg-white text-slate-500 border border-slate-200'"
+                                    class="flex-1 py-2 rounded-lg text-xs font-bold transition-all">
+                                LA NIÑA
+                            </button>
+                            <button (click)="formData.intervenciones.horaJuego = 'niño'"
+                                    [class]="formData.intervenciones.horaJuego === 'niño' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'bg-white text-slate-500 border border-slate-200'"
+                                    class="flex-1 py-2 rounded-lg text-xs font-bold transition-all">
+                                EL NIÑO
+                            </button>
+                        </div>
+
+                        <!-- Date (Se muestra solo si se selecciona niño o niña, opcional) -->
+                        <!-- Usaremos afectivo o agregamos uno generico, asumamos que va ligado a la fecha del input debajo o un campo nuevo.
+                             Nota: Reusaré 'afectivo' como placeholder si no tienes campo 'fechaHoraJuego' específico, 
+                             OJO: Agrega un campo simple type="date" sin binding específico si es solo visual o usa un campo genérico -->
+                         <div class="relative">
+                            <span class="text-[10px] font-bold text-indigo-400 absolute -top-2 left-2 bg-white px-1">FECHA</span>
+                            <!-- Si no tienes campo fechaHoraJuego en type.ts, reusamos uno existente o creas uno. 
+                                 Aquí asumo que quieres que se registre, por ahora lo dejo visualmente sin bindear para no romper tu TS 
+                                 si no quieres agregar campos nuevos, o bindealo a una propiedad que no uses. -->
+                            <input type="date" class="w-full px-4 py-3 bg-white border border-indigo-100 rounded-xl font-bold text-indigo-900 focus:ring-2 focus:ring-indigo-500 transition-all outline-none">
+                         </div>
+                    </div>
+
+                    <!-- Entrevista Adolescente -->
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                        <label class="flex flex-col h-full justify-between">
+                            <span class="text-sm font-bold text-slate-600 mb-3 flex items-center">
+                                <div class="w-2 h-2 rounded-full bg-emerald-500 mr-2"></div>
+                                Entrevista con Adolescente
+                            </span>
+                            <input type="date" [(ngModel)]="formData.intervenciones.entrevistaAdolescente" 
+                                   class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500 transition-all outline-none">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Grupo 3: Médicos y Forenses -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                     <!-- Examen Fisico con Toggle -->
+                    <div class="bg-amber-50/50 p-5 rounded-2xl border border-amber-100 relative">
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-sm font-black text-amber-900 block uppercase tracking-wider">Examen Físico</span>
+                            <!-- Toggle Forense -->
+                            <div class="flex items-center bg-white rounded-lg p-1 border border-amber-200 shadow-sm">
+                                <button (click)="formData.intervenciones.conForense = false"
+                                        [class]="!formData.intervenciones.conForense ? 'bg-amber-500 text-white' : 'text-slate-400'"
+                                        [disabled]="isReadOnly"
+                                        class="px-3 py-1 rounded-md text-[10px] font-bold transition-all">
+                                    SIN FORENSE
+                                </button>
+                                <button (click)="formData.intervenciones.conForense = true"
+                                        [class]="formData.intervenciones.conForense ? 'bg-amber-900 text-white' : 'text-slate-400'"
+                                        [disabled]="isReadOnly"
+                                        class="px-3 py-1 rounded-md text-[10px] font-bold transition-all">
+                                    CON FORENSE
+                                </button>
+                            </div>
+                        </div>
+                        <input type="date" [(ngModel)]="formData.intervenciones.examenFisico" 
+                               [disabled]="isReadOnly"
+                               class="w-full px-4 py-3 bg-white border border-amber-100 rounded-xl font-bold text-amber-900 focus:ring-2 focus:ring-amber-500 transition-all outline-none">
+                    </div>
+
+                    <!-- Laboratorio -->
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                        <label class="flex flex-col h-full justify-between">
+                            <span class="text-sm font-bold text-slate-600 mb-3 flex items-center">
+                                <div class="w-2 h-2 rounded-full bg-blue-500 mr-2"></div>
+                                Control de Laboratorio
+                            </span>
+                            <input type="date" [(ngModel)]="formData.intervenciones.laboratorio" 
+                                   class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:ring-2 focus:ring-blue-500 transition-all outline-none">
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Observaciones y Adherencia -->
+        <div class="grid grid-cols-1 gap-6">
+            <div class="group">
+                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-3 ml-1">Observaciones sobre implementación y adherencia</label>
+                <div class="relative">
+                    <div class="absolute top-5 left-5 text-slate-400">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    </div>
+                    <textarea [(ngModel)]="formData.observacionesAdherencia" 
+                                 [disabled]="isReadOnly"
+                              class="w-full pl-14 pr-5 py-5 bg-white border-2 border-slate-200 rounded-[24px] text-lg text-slate-700 font-bold focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 transition-all outline-none h-32 leading-relaxed" 
+                              placeholder="Describa la respuesta al tratamiento..."></textarea>
+                </div>
+            </div>
+
+            <div class="group">
+                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-3 ml-1">Registro de Ausencias (Fechas)</label>
+                <div class="relative">
+                    <div class="absolute top-1/2 -translate-y-1/2 left-5 text-slate-400">
+                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </div>
+                    <input type="text" [(ngModel)]="formData.ausencias" 
+                           [disabled]="isReadOnly"
+
+                           placeholder="Ej: 10/05/2024, 15/05/2024"
+                           class="w-full pl-14 pr-5 py-4 bg-rose-50 border-2 border-rose-100 rounded-2xl text-lg text-rose-900 font-bold focus:border-rose-400 outline-none transition-all">
+                </div>
+            </div>
+        </div>
+    </section>
+
+        <div class="space-y-12">
+            <div class="bg-white p-10 rounded-[40px] border border-slate-200 shadow-sm">
+                 <h3 class="text-2xl font-black text-slate-800 tracking-tight mb-8">Entrevista con Referente Familiar</h3>
+                 <textarea [(ngModel)]="formData.entrevistaReferenteDetalle" [disabled]="isReadOnly" class="w-full p-10 border-2 border-slate-100 rounded-[32px] text-lg bg-slate-50 min-h-[300px] font-bold text-slate-900 placeholder-slate-400"></textarea>
+            </div>
+            <div class="bg-white p-10 rounded-[40px] border border-slate-200 shadow-sm">
+                 <h3 class="text-2xl font-black text-slate-800 tracking-tight mb-8">Atención Psicológica Especializada</h3>
+                 <textarea [(ngModel)]="formData.atencionPsicologicaDetalle" [disabled]="isReadOnly" class="w-full p-10 border-2 border-slate-100 rounded-[32px] text-lg bg-slate-50 min-h-[300px] font-bold text-slate-900 placeholder-slate-400"></textarea>
+            </div>
+        </div>
+    </section>
+
+    <!-- STEP 4: Clinica -->
+    <!-- STEP 4: Clínica y Estrategia (Paso 5 Visual) -->
+    <section *ngIf="activeStep === 4" class="animate-in fade-in slide-in-from-bottom-6 duration-500">
+        <div class="mb-10">
+            <h2 class="text-2xl font-black text-slate-900 mb-2">Atención Médica y Estrategia</h2>
+            <p class="text-slate-500 text-sm">Hallazgos clínicos, pruebas realizadas y plan de seguimiento</p>
+        </div>
+
+        <!-- 1. ATENCIÓN MÉDICA -->
+        <div class="bg-white p-8 rounded-[32px] border border-slate-200 shadow-sm mb-10 relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-2 h-full bg-emerald-500"></div>
+            <h3 class="text-lg font-black text-emerald-800 uppercase tracking-widest mb-8 flex items-center">
+                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+                Atención Médica
+            </h3>
+
+            <!-- Examen Físico -->
+            <div class="mb-8 p-6 bg-slate-50 rounded-2xl">
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Paciente Examinado/a</label>
+                <div class="flex flex-wrap gap-4 mb-6">
+                    <button *ngFor="let v of ['niña', 'niño', 'adolescente']" 
+                            (click)="formData.atencionMedicaExamen = $any(v)"
+                            [class]="formData.atencionMedicaExamen === v ? 'bg-emerald-600 border-emerald-600 text-white shadow-md' : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'"
+                            [disabled]="isReadOnly"
+                            class="px-6 py-3 rounded-xl border-2 text-sm font-black uppercase transition-all">
+                        {{v}}
+                    </button>
+                </div>
+
+                <div class="flex flex-col md:flex-row gap-6">
+                    <label class="flex items-center p-4 bg-white border-2 border-slate-200 rounded-xl cursor-pointer hover:border-emerald-400 transition-all flex-1">
+                        <input type="checkbox" [(ngModel)]="formData.genitalNormal" [disabled]="isReadOnly" class="w-6 h-6 mr-3 rounded text-emerald-600 border-slate-300 focus:ring-emerald-500">
+                        <span class="font-bold text-slate-700">Genitales dentro de parámetros normales</span>
+                    </label>
+                    <input [(ngModel)]="formData.atencionMedicaOtro" placeholder="Otro hallazgo..." [disabled]="isReadOnly" class="flex-1 px-4 py-3 bg-white border-2 border-slate-200 rounded-xl font-bold text-slate-800 outline-none focus:border-emerald-500">
+                </div>
+            </div>
+
+            <!-- Fotografía -->
+            <div class="mb-8">
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Registro Fotográfico</label>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <label *ngFor="let opt of ['Consentimiento del familiar', 'Asentimiento del familiar', 'Consentimiento del NNyA', 'Asentimiento del NNyA']" 
+                           class="flex items-center space-x-3 cursor-pointer p-3 hover:bg-slate-50 rounded-lg">
+                        <input type="checkbox" [disabled]="isReadOnly"
+                               [checked]="formData.fotografiaConsentimiento.includes(opt)" 
+                               (change)="handleCheckboxList('fotografiaConsentimiento', opt)"
+                               class="w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
+                        <span class="font-medium text-slate-700">{{opt}}</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Laboratorios -->
+            <div class="mb-8 border-t border-slate-100 pt-6">
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Estado de Laboratorio</label>
+                <div class="flex gap-4 mb-4">
+                    <button (click)="formData.laboratorioEstado = 'solicitado'" [class]="formData.laboratorioEstado === 'solicitado' ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-white text-slate-400 border-slate-200'" [disabled]="isReadOnly" class="px-4 py-2 rounded-lg border-2 font-bold text-sm">Solicitado</button>
+                    <button (click)="formData.laboratorioEstado = 'espera'" [class]="formData.laboratorioEstado === 'espera' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-white text-slate-400 border-slate-200'" [disabled]="isReadOnly" class="px-4 py-2 rounded-lg border-2 font-bold text-sm">En espera</button>
+                    <button (click)="formData.laboratorioEstado = 'recibido'" [class]="formData.laboratorioEstado === 'recibido' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-white text-slate-400 border-slate-200'" [disabled]="isReadOnly" class="px-4 py-2 rounded-lg border-2 font-bold text-sm">Recibido</button>
+                </div>
+                
+                <div *ngIf="formData.laboratorioEstado === 'recibido'" class="animate-in slide-in-from-top-2">
+                    <textarea [(ngModel)]="formData.hallazgosLaboratorio" placeholder="Se evidencia (infección urinaria, ETS)..." class="w-full p-4 border-2 border-emerald-100 rounded-xl bg-emerald-50/30 text-emerald-900 font-medium placeholder-emerald-400 focus:ring-2 focus:ring-emerald-500 outline-none"></textarea>
+                </div>
+            </div>
+
+            <!-- Tratamiento -->
+           <!-- Tratamiento (Input que ya tenías) -->
+            <div>
+                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Indicación de Tratamiento Médico</label>
+                 <input [(ngModel)]="formData.tratamientoIndicado" [disabled]="isReadOnly" class="w-full px-5 py-4 border-2 border-slate-200 rounded-xl font-bold text-lg text-slate-800 outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all mb-6">
+            </div>
+
+            <!-- NUEVO: Zona de Adjunto para Clínica -->
+            <div class="bg-slate-50 p-4 rounded-xl border-2 border-dashed border-slate-200">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 flex items-center justify-between">
+                    Documentación Médica Anexa
+                    <span *ngIf="formData.archivoAtencionMedica" class="text-emerald-500 font-bold text-xs flex items-center animate-in fade-in">
+                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        Cargado
+                    </span>
+                </label>
+
+                <!-- Input de Descripción -->
+                <div class="mb-3">
+                    <input type="text" 
+                           [(ngModel)]="formData.descripcionAtencionMedica"
+                           placeholder="Referencia (Ej: Estudios Complementarios / Receta Escaneada)" 
+                           [disabled]="isReadOnly"
+                           class="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg outline-none focus:border-emerald-500 font-bold text-slate-700 placeholder-slate-400 transition-all">
+                </div>
+                
+                <!-- Input File Oculto (Nuevas referencias) -->
+                <input type="file" #pdfMedicalInput hidden accept=".pdf" (change)="onMedicalFileSelected($event)">
+                
+                <!-- Botón Subir (Si no hay archivo) -->
+                <button *ngIf="!formData.archivoAtencionMedica" 
+                        (click)="pdfMedicalInput.click()" 
+                        [disabled]="isReadOnly"
+                        class="w-full py-2.5 px-4 rounded-lg bg-emerald-50 border border-emerald-100 hover:bg-emerald-100 transition-all text-emerald-700 flex items-center justify-center group font-bold text-sm">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                    Adjuntar Informe/Estudio (PDF)
+                </button>
+
+                <!-- Tarjeta Archivo Cargado -->
+                <div *ngIf="formData.archivoAtencionMedica" class="flex items-center justify-between bg-white border border-emerald-200 p-2 rounded-lg shadow-sm animate-in slide-in-from-bottom-2">
+                    <div class="flex items-center overflow-hidden">
+                        <div class="bg-red-50 p-1.5 rounded text-red-600 mr-2 flex-shrink-0">
+                            <!-- Icono PDF -->
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H9z" /><path d="M3 8a2 2 0 012-2v10h8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" /></svg>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-xs font-bold text-slate-800 truncate" title="{{formData.archivoAtencionMedica}}">
+                                {{formData.archivoAtencionMedica}}
+                            </p>
+                        </div>
+                    </div>
+                    <button (click)="removeMedicalFile()" class="ml-2 text-slate-400 hover:text-red-500 transition-colors p-1" title="Eliminar archivo">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. ARTICULACIÓN -->
+        <div class="bg-indigo-50 p-8 rounded-[32px] border border-indigo-100 shadow-sm mb-10">
+            <h3 class="text-lg font-black text-indigo-900 uppercase tracking-widest mb-6">Articulaciones Inter e Intrainstitucional</h3>
+            
+            <div class="grid grid-cols-1 gap-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-indigo-100/50">
+                    <label class="block text-xs font-bold text-indigo-400 uppercase tracking-widest mb-2">Coordinación con Servicios de Protección de NN y A</label>
+                    <input [(ngModel)]="formData.coordinacionProteccion" [disabled]="isReadOnly" placeholder="Roles, responsables, finalidad..." class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-medium focus:bg-white focus:border-indigo-500 outline-none">
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-indigo-100/50">
+                    <label class="block text-xs font-bold text-indigo-400 uppercase tracking-widest mb-2">Diálogo Interdisciplinario (Equipo)</label>
+                    <input [(ngModel)]="formData.dialogoInterdisciplinario" [disabled]="isReadOnly" placeholder="¿Con qué profesional se articuló?" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-medium focus:bg-white focus:border-indigo-500 outline-none">
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. ESTRATEGIA TERAPÉUTICA -->
+        <div class="bg-white p-8 rounded-[32px] border border-slate-200 shadow-sm mb-10">
+            <h3 class="text-lg font-black text-indigo-800 uppercase tracking-widest mb-8 border-b border-slate-100 pb-4">
+                Estrategia Terapéutica y Seguimiento
+            </h3>
+
+            <!-- Turnos -->
+            <div class="mb-10 bg-indigo-50/50 p-6 rounded-2xl border border-indigo-100">
+                <label class="block text-sm font-black text-indigo-900 mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+                    Se otorga turno con:
+                </label>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                        <select [(ngModel)]="formData.estrategiaTurnoCon" [disabled]="isReadOnly" class="w-full px-4 py-4 bg-white border-2 border-indigo-100 rounded-xl font-bold text-slate-700 focus:border-indigo-500 outline-none mb-3">
+                            <option value="">-- Seleccionar Profesional --</option>
+                            <option value="Lic. Ivana Diambri">Lic. Ivana Diambri</option>
+                            <option value="Lic. Lorena Caceres">Lic. Lorena Caceres</option>
+                            <option value="Dra. Lopez">Dra. Lopez</option>
+                            <option value="Lic. Luciana Lobera">Lic. Luciana Lobera</option>
+                            <option value="Lic. Rosana Arébalo">Lic. Rosana Arébalo</option>
+                        </select>
+                    </div>
+                    <div>
+                        <input type="date" [(ngModel)]="formData.estrategiaFechaTurno" [disabled]="isReadOnly" class="w-full px-4 py-3.5 bg-white border-2 border-indigo-100 rounded-xl font-bold text-indigo-600 focus:border-indigo-500 outline-none">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Checkbox List de Recomendaciones -->
+            <div class="space-y-4">
+                <!-- Terapia Familiar -->
+                <label class="flex items-center p-4 rounded-xl border-2 border-transparent hover:border-slate-200 hover:bg-slate-50 transition-all cursor-pointer">
+                    <input type="checkbox" [(ngModel)]="formData.recomiendaTerapiaReferente" [disabled]="isReadOnly" class="w-6 h-6 mr-4 rounded text-indigo-600 border-slate-300">
+                    <span class="font-bold text-slate-700">Se recomienda al referente familiar realizar terapia psicológica</span>
+                </label>
+                
+                <!-- Derivación (Con input) -->
+                <div class="p-4 rounded-xl border-2 border-transparent hover:border-slate-200 hover:bg-slate-50 transition-all">
+                     <div class="flex items-center mb-2">
+                        <div class="w-6 h-6 mr-4 flex items-center justify-center text-indigo-600 font-bold">→</div>
+                        <span class="font-bold text-slate-700">Se deriva a:</span>
+                     </div>
+                     <input [(ngModel)]="formData.derivacionA" [disabled]="isReadOnly" placeholder="Especifique institución o servicio..." class="w-full ml-10 px-4 py-2 border border-slate-200 rounded-lg text-sm focus:border-indigo-500 outline-none max-w-md">
+                </div>
+
+                <!-- Espacio Grupal -->
+                <label class="flex items-start p-4 rounded-xl border-2 border-transparent hover:border-slate-200 hover:bg-slate-50 transition-all cursor-pointer">
+                    <input type="checkbox" [(ngModel)]="formData.espacioGrupal" [disabled]="isReadOnly" class="w-6 h-6 mr-4 mt-1 rounded text-indigo-600 border-slate-300 shrink-0">
+                    <div>
+                        <span class="font-bold text-slate-700 block">Participación de espacio grupal SAINNAVV</span>
+                        <span class="text-xs text-slate-500 font-medium">Contención para elaborar situaciones vividas.</span>
+                    </div>
+                </label>
+
+                <!-- Cámara Gesell -->
+                <label class="flex items-start p-4 rounded-xl border-2 border-transparent hover:border-slate-200 hover:bg-slate-50 transition-all cursor-pointer">
+                    <input type="checkbox" [(ngModel)]="formData.acompanamientoGesell" [disabled]="isReadOnly" class="w-6 h-6 mr-4 mt-1 rounded text-indigo-600 border-slate-300 shrink-0">
+                    <span class="font-bold text-slate-700">Acompañamiento en declaración de Cámara Gesell</span>
+                </label>
+
+                <!-- Medidas de Impedimento -->
+                <div class="bg-rose-50 p-6 rounded-2xl border border-rose-100 mt-6">
+                    <label class="block text-xs font-black text-rose-800 uppercase tracking-widest mb-3">Medidas de Protección (Impedimento de Contacto)</label>
+                    <p class="text-xs text-rose-600 mb-2">Se sugirió establecer medidas con el Sr./Sra. hasta esclarecimiento judicial.</p>
+                    <input [(ngModel)]="formData.medidasImpedimento" [disabled]="isReadOnly" placeholder="Nombre de la persona restringida..." class="w-full px-4 py-3 border-2 border-rose-200 bg-white rounded-xl text-rose-900 font-bold placeholder-rose-300 outline-none focus:ring-4 focus:ring-rose-500/10">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- STEP 5: Final -->
+   <!-- STEP 5: Conclusión (Paso 6 Visual) -->
+    <section *ngIf="activeStep === 5" class="animate-in fade-in slide-in-from-bottom-6 duration-500">
+        <div class="mb-10">
+            <h2 class="text-2xl font-black text-slate-900 mb-2">Conclusiones Finales</h2>
+            <p class="text-slate-500 text-sm">Dictamen profesional y elevación de informe</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            <!-- Columna Izquierda: Análisis y Abordaje -->
+            <div class="space-y-8">
+                
+                <!-- 1. Abordaje e Indicadores -->
+                <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+                    <h3 class="text-sm font-black text-indigo-900 uppercase tracking-widest mb-4 border-b border-indigo-50 pb-2">Abordaje Realizado y Hallazgos</h3>
+                    
+                    <label class="block text-xs font-bold text-slate-400 mb-3">Se hallan indicadores a partir del abordaje:</label>
+                    <div class="flex gap-2 mb-4">
+                        <button *ngFor="let tipo of ['Médico', 'Psicológico', 'Social']" 
+                                (click)="handleCheckboxList('conclusionAbordaje', tipo)"
+                                [class]="formData.conclusionAbordaje.includes(tipo) ? 'bg-indigo-600 text-white' : 'bg-slate-50 text-slate-500'"
+                                class="px-3 py-2 rounded-lg text-sm font-bold border transition-all">
+                            {{tipo}}
+                        </button>
+                    </div>
+
+                    <label class="block text-xs font-bold text-slate-400 mb-3">Indicadores Específicos:</label>
+                    <div class="space-y-4 mb-4">
+                        <!-- Relato -->
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input  type="checkbox" 
+                                   [checked]="formData.indicadoresHallados.includes('Relato')"
+                                   (change)="handleCheckboxList('indicadoresHallados', 'Relato')"
+                                   [disabled]="isReadOnly" 
+                                   class="w-5 h-5 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500">
+                            <span class="text-sm font-bold text-slate-700">Relato</span>
+                        </label>
+
+                        <!-- Lesiones (Con Despliegue) -->
+                        <div>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" 
+                                       [checked]="formData.indicadoresHallados.includes('Lesiones')"
+                                       (change)="handleCheckboxList('indicadoresHallados', 'Lesiones')" 
+                                       [disabled]="isReadOnly"
+                                       class="w-5 h-5 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500">
+                                <span class="text-sm font-bold text-slate-700">Lesiones</span>
+                            </label>
+
+                            <!-- CAMPO TEXTO QUE APARECE SI ESTÁ TILDADO -->
+                            <div *ngIf="formData.indicadoresHallados.includes('Lesiones')" class="mt-2 ml-7 animate-in slide-in-from-top-1 fade-in">
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                    </div>
+                                    <input 
+                                        type="text" 
+                                        [(ngModel)]="formData.detalleLesionesTexto"
+                                        placeholder="Especifique el tipo de lesión (quemadura, hematoma...)" 
+                                        [disabled]="isReadOnly"
+
+                                        class="w-full pl-9 pr-4 py-2 text-sm border-l-4 border-l-rose-400 border-y border-r border-slate-200 rounded-r-lg bg-rose-50/50 focus:bg-white focus:border-rose-400 focus:ring-2 focus:ring-rose-200 outline-none transition-all placeholder-rose-300 text-slate-700 font-medium">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <label class="block text-xs font-bold text-slate-400 mb-1">E indicadles inespecíficos:</label>
+                        <input [(ngModel)]="formData.textoInespecificos" [disabled]="isReadOnly" class="w-full px-3 py-2 bg-slate-50 border rounded-xl text-sm font-medium outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <!-- 2. Compatibilidad -->
+                <div class="bg-rose-50/50 p-6 rounded-3xl border border-rose-100">
+                    <h3 class="text-sm font-black text-rose-900 uppercase tracking-widest mb-4">Compatibilidad Vivencias Abusivas</h3>
+                    <div class="grid grid-cols-2 gap-3">
+                         <label *ngFor="let comp of ['Sexual', 'Física', 'Otro']" class="flex items-center space-x-2 cursor-pointer bg-white p-3 rounded-xl border border-rose-100">
+                             <input type="checkbox" 
+                                    [checked]="formData.compatibilidad.includes(comp)"
+                                    (change)="handleCheckboxList('compatibilidad', comp)" 
+                                    [disabled]="isReadOnly"
+                                    class="rounded text-rose-600 focus:ring-rose-500">
+                             <span class="text-sm font-bold text-slate-700">{{comp}}</span>
+                         </label>
+                    </div>
+                    <!-- Campo Extra si selecciona 'Otro', opcional -->
+                    <div *ngIf="formData.compatibilidad.includes('Otro')" class="mt-3">
+                         <input placeholder="Especifique otro..." [disabled]="isReadOnly" class="w-full px-3 py-2 bg-white border border-rose-200 rounded-lg text-sm">
+                    </div>
+                </div>
+
+               <!-- Seccion de Adjuntos en Paso 6 -->
+            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+                <h3 class="text-sm font-black text-slate-700 uppercase tracking-widest mb-4 border-b border-slate-100 pb-2">
+                    Documentación Adjunta
+                </h3>
+                
+                <div class="space-y-4">
+                    <!-- Iteramos sobre las opciones definidas en el TS -->
+                    <div *ngFor="let opcion of adjuntoOpciones" class="border border-slate-100 rounded-xl bg-slate-50 p-3 transition-all duration-300"
+                         [class.border-indigo-200]="formData.adjuntos.includes(opcion)"
+                         [class.bg-indigo-50]="formData.adjuntos.includes(opcion)">
+                        
+                        <!-- Encabezado con Checkbox -->
+                        <label class="flex items-center cursor-pointer justify-between">
+                            <div class="flex items-center">
+                                <input type="checkbox" 
+                                       [checked]="formData.adjuntos.includes(opcion)" 
+                                       (change)="toggleAdjunto(opcion)"
+                                        [disabled]="isReadOnly"
+                                       class="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 transition-colors">
+                                <span class="ml-3 text-sm font-bold" 
+                                      [class.text-indigo-800]="formData.adjuntos.includes(opcion)"
+                                      [class.text-slate-600]="!formData.adjuntos.includes(opcion)">
+                                    {{opcion}}
+                                </span>
+                            </div>
+                            
+                            <!-- Indicador si ya hay archivo cargado (Solo visual, útil si recuperas datos) -->
+                            <span *ngIf="formData.adjuntosNombres && formData.adjuntosNombres[opcion]" class="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-bold flex items-center">
+                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
+                                PDF OK
+                            </span>
+                        </label>
+
+                        <!-- Zona de Carga (Se despliega solo si está tildado) -->
+                        <div *ngIf="formData.adjuntos.includes(opcion)" class="mt-3 pl-8 animate-in slide-in-from-top-1 fade-in">
+                            
+                            <!-- Input file oculto -->
+                            <input type="file" #fileInput hidden accept=".pdf" (change)="onAdjuntoFileSelected($event, opcion)">
+
+                            <!-- Botón Subir (Si no hay archivo aun en memoria o en datos viejos) -->
+                            <button *ngIf="!formData.adjuntosNombres[opcion]" 
+                                    (click)="fileInput.click()"
+                                     [disabled]="isReadOnly"
+                                    class="text-xs bg-white border border-indigo-200 text-indigo-600 hover:bg-indigo-600 hover:text-white px-3 py-2 rounded-lg font-bold transition-all flex items-center shadow-sm">
+                                <svg class="w-3 h-3 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                Cargar {{opcion}}
+                            </button>
+
+                            <!-- Tarjeta de Archivo Seleccionado -->
+                            <div *ngIf="formData.adjuntosNombres[opcion]"  class="flex items-center justify-between bg-white border border-indigo-200 rounded-lg p-2 pr-3" >
+                                <div class="flex items-center overflow-hidden gap-2">
+                                    <div class="bg-red-50 text-red-600 p-1.5 rounded">
+                                  
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H9z" /><path d="M3 8a2 2 0 012-2v10h8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" /></svg>
+                                    </div>
+                                    <span class="text-xs font-medium text-slate-600 truncate max-w-[150px]" title="{{formData.adjuntosNombres[opcion]}}">
+                                        {{formData.adjuntosNombres[opcion]}}
+                                    </span>
+                                </div>
+                                
+                                <div  class="flex items-center">
+                                    <button (click)="fileInput.click()" [disabled]="isReadOnly" class="text-indigo-400 hover:text-indigo-600 mr-2 p-1" title="Cambiar archivo">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                    </button>
+                                    <button (click)="removeAdjuntoFile(opcion)" [disabled]="isReadOnly" class="text-slate-400 hover:text-red-500 p-1" title="Quitar archivo">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            </div>
+
+            <!-- Columna Derecha: Observaciones y Elevación -->
+            <div class="space-y-8">
+                
+                <!-- 4. Observaciones de Información -->
+                <div class="bg-slate-50 p-6 rounded-3xl border border-slate-200">
+                    <h3 class="text-sm font-black text-slate-700 uppercase tracking-widest mb-4">Observaciones de la Información Obtenida</h3>
+                    
+                    <div class="space-y-6">
+                        <!-- Item 1 -->
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                            <p class="text-xs font-bold text-slate-400 mb-2 uppercase">Declaración NNyA</p>
+                            <label class="block text-sm text-slate-700 mb-2 font-bold">A partir de los dichos de NNyA las situaciones abusivas podrían haber constado de:</label>
+                            <textarea [(ngModel)]="formData.textoDichosNNyA" [disabled]="isReadOnly" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:border-indigo-500 outline-none h-20"></textarea>
+                        </div>
+
+                        <!-- Item 2 -->
+                        <div class="flex items-start p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
+                            <input type="checkbox" [disabled]="isReadOnly" checked disabled class="w-5 h-5 mt-0.5 text-emerald-500 rounded border-slate-300">
+                            <span class="ml-3 text-sm text-slate-600 font-medium">Cabe destacar que lo develado es concomitante con el relato expuesto por los referentes familiares anteriormente mencionados.</span>
+                        </div>
+
+                        <!-- Item 3: Preventivas -->
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                            <div class="flex items-center mb-2">
+                                <div class="w-2 h-2 rounded-full bg-rose-500 mr-2"></div>
+                                <p  class="text-xs font-bold text-rose-700 uppercase">Medidas Preventivas</p>
+                            </div>
+                            <p class="text-sm text-slate-700 mb-2 leading-relaxed">Se sugiere implementar medidas a los fines de impedir todo contacto con el supuesto victimario, considerando que...</p>
+                            <textarea [(ngModel)]="formData.textoPreventivas" 
+                                      [disabled]="isReadOnly"
+                                      placeholder="..." 
+                                      class="w-full p-2 mb-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold focus:border-indigo-500 outline-none"></textarea>
+                            <p class="text-xs text-slate-500 italic">...hasta que no sea esclarecido y/o confirmado/descartado el potencial riesgo a través de Fiscalía.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. Elevación de Informe (Legal) -->
+                <div class="bg-indigo-900 p-8 rounded-[32px] text-white shadow-xl shadow-indigo-200">
+                     <h3 class="text-lg font-black text-indigo-100 uppercase tracking-widest mb-6 flex items-center">
+                        <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
+                        Remisión Asesoría Legal
+                     </h3>
+                     <p class="text-xs text-indigo-300 mb-6">Se eleva para que por su intermedio sea remitido a:</p>
+
+                     <div class="space-y-5">
+                         <!-- Fiscalía -->
+                         <div class="bg-indigo-800/50 p-4 rounded-xl border border-indigo-700">
+                            <label class="flex items-center cursor-pointer mb-3">
+                                <input type="checkbox" [disabled]="isReadOnly" [checked]="formData.destinoLegal.includes('fiscalia')" (change)="handleCheckboxList('destinoLegal', 'fiscalia')" class="w-5 h-5 rounded text-white border-indigo-400 focus:ring-0">
+                                <span class="ml-3 font-bold">La Fiscalía Interviniente</span>
+                            </label>
+                            
+                            <div *ngIf="formData.destinoLegal.includes('fiscalia')" class="grid grid-cols-2 gap-3 pl-8 animate-in slide-in-from-top-2">
+                                <div>
+                                    <span class="text-[10px] text-indigo-300 uppercase font-bold">N° Fiscalía</span>
+                                    <input [(ngModel)]="formData.fiscaliaNro" [disabled]="isReadOnly" class="w-full p-2 bg-indigo-900/80 border border-indigo-600 rounded text-white font-bold outline-none text-sm">
+                                </div>
+                                <div>
+                                    <span class="text-[10px] text-indigo-300 uppercase font-bold">Rta. Oficio N°</span>
+                                    <input [(ngModel)]="formData.oficioNro" [disabled]="isReadOnly" class="w-full p-2 bg-indigo-900/80 border border-indigo-600 rounded text-white font-bold outline-none text-sm">
+                                </div>
+                            </div>
+                         </div>
+
+                         <!-- OTA -->
+                         <label class="flex items-center bg-indigo-800/50 p-4 rounded-xl border border-indigo-700 cursor-pointer hover:bg-indigo-800 transition-colors">
+                             <input type="checkbox" [disabled]="isReadOnly" [checked]="formData.destinoLegal.includes('ota')" (change)="handleCheckboxList('destinoLegal', 'ota')" class="w-5 h-5 rounded text-white border-indigo-400 focus:ring-0">
+                             <span class="ml-3 font-bold">A la O.T.A.</span>
+                         </label>
+
+                         <!-- Juzgado de Familia -->
+                         <div class="bg-indigo-800/50 p-4 rounded-xl border border-indigo-700">
+                            <label class="flex items-center cursor-pointer mb-3">
+                                <input type="checkbox" [disabled]="isReadOnly"   [checked]="formData.destinoLegal.includes('juzgado')" (change)="handleCheckboxList('destinoLegal', 'juzgado')" class="w-5 h-5 rounded text-white border-indigo-400 focus:ring-0">
+                                <span class="ml-3 font-bold">Juzgado de Familia</span>
+                            </label>
+
+                            <div *ngIf="formData.destinoLegal.includes('juzgado')" class="pl-8 space-y-3 animate-in slide-in-from-top-2">
+                                <div class="flex gap-4 text-sm">
+                                    <label class="flex items-center cursor-pointer">
+                                        <input type="radio" name="tipoJuzgado" [value]="false" [(ngModel)]="formData.esJuzgadoDeTurno" class="text-white border-indigo-400 focus:ring-0">
+                                        <span class="ml-2 text-indigo-200">Interviniente</span>
+                                    </label>
+                                    <label class="flex items-center cursor-pointer">
+                                        <input type="radio" name="tipoJuzgado" [value]="true" [(ngModel)]="formData.esJuzgadoDeTurno" class="text-white border-indigo-400 focus:ring-0">
+                                        <span class="ml-2 text-indigo-200">De Turno</span>
+                                    </label>
+                                </div>
+                                <div *ngIf="!formData.esJuzgadoDeTurno">
+                                    <input [(ngModel)]="formData.nombreJuzgadoInterviniente" placeholder="Especifique juzgado..." [disabled]="isReadOnly" class="w-full p-2 bg-indigo-900/80 border border-indigo-600 rounded text-white font-bold outline-none text-sm">
+                                </div>
+                            </div>
+                         </div>
+                     </div>
+                </div>
+            </div>
+        </div>
+    </section>
+  
+    <!-- Controls -->
+    <div class="pt-16 border-t border-slate-100 flex justify-between items-center mt-20 no-print">
+      <button [disabled]="activeStep === 0" (click)="prevStep()" [class.opacity-50]="activeStep===0" class="flex items-center px-10 py-4 rounded-3xl font-black text-xs uppercase bg-slate-100 text-slate-800">Anterior</button>
+      <div class="flex items-center space-x-3">
+        <div *ngFor="let step of [0,1,2,3,4,5]; let i=index" [class]="activeStep === i ? 'w-12 bg-indigo-600 shadow-lg shadow-indigo-200' : 'w-3 h-3 bg-slate-200'" class="rounded-full transition-all duration-500 h-3"></div>
+      </div>
+      <button *ngIf="activeStep < 5" (click)="nextStep()" class="px-12 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-3xl font-black text-xs uppercase shadow-xl transition-all">Siguiente Paso</button>
+      <button *ngIf="canEdit && activeStep === 5" 
+        (click)="triggerPrint()" class="px-12 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-3xl font-black text-xs uppercase shadow-xl transition-all">Guardar e Imprimir</button>
+        <button *ngIf="isReadOnly && activeStep === 5" 
+        (click)="toDate()" 
+        onclick="window.print()"
+        class="px-12 py-4 bg-blue-500 hover:bg-blue-600 text-white rounded-3xl font-black text-xs uppercase shadow-xl transition-all">
+  Imprimir Vista
+</button>
+    </div>
+   <!-- ============================================================== -->
+<!-- REPORTE DE IMPRESIÓN COMPLETO (SOLO VISIBLE AL IMPRIMIR)       -->
+<!-- ============================================================== -->
+<div class="printable-report">
+    
+    <!-- Encabezado Institucional -->
+    <div class="report-header flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold uppercase">Informe SAINNAVV</h1>
+            <p class="text-sm">Sistema de Abordaje Integral de Niñez y Adolescencia</p>
+        </div>
+        <div class="text-right">
+            <p class="text-xs font-bold">Fecha de Impresión: {{toDate() | date:'dd/MM/yyyy'}}</p>
+            <p class="text-xs">ID Historia: {{formData.idHistoria || 'N/A'}}</p>
+        </div>
+    </div>
+
+    <!-- I. PROFESIONALES -->
+    <div class="report-section mb-6">
+        <h3 class="font-bold border-b border-black mb-2 uppercase text-sm">I. Equipo Interviniente</h3>
+        <div class="grid grid-cols-4 gap-4">
+            <div><span class="report-label">Médico/a:</span> <span class="report-value">{{formData.medicoInterviniente}}</span></div>
+            <div><span class="report-label">Trabajador/a Social:</span> <span class="report-value">{{formData.trabajadorSocial}}</span></div>
+            <div><span class="report-label">Psicólogo/a:</span> <span class="report-value">{{formData.psicologo}}</span></div>
+            <div><span class="report-label">Enfermero/a:</span> <span class="report-value">{{formData.enfermero}}</span></div>
+        </div>
+    </div>
+
+    <!-- II. DATOS PACIENTE -->
+    <div class="report-section mb-6">
+        <h3 class="font-bold border-b border-black mb-2 uppercase text-sm">II. Datos del Paciente</h3>
+        <div class="grid grid-cols-3 gap-4">
+            <div class="col-span-2"><span class="report-label">Nombre y Apellido:</span> <span class="report-value">{{formData.nombreApellido}}</span></div>
+            <div><span class="report-label">D.N.I.:</span> <span class="report-value">{{formData.dni}}</span></div>
+            <div><span class="report-label">F. Nacimiento:</span> <span class="report-value">{{formData.fechaNacimiento}}</span></div>
+            <div><span class="report-label">Edad:</span> <span class="report-value">{{formData.edad}}</span></div>
+            <div><span class="report-label">Obra Social:</span> <span class="report-value">{{formData.obraSocial ? 'SI - ' + formData.cualObraSocial : 'NO'}}</span></div>
+            <div class="col-span-3"><span class="report-label">Domicilio:</span> <span class="report-value">{{formData.domicilio}}</span></div>
+        </div>
+    </div>
+
+    <!-- III. FAMILIA -->
+    <div class="report-section mb-6">
+        <h3 class="font-bold border-b border-black mb-2 uppercase text-sm">III. Grupo Familiar y Acompañante</h3>
+        
+        <div class="grid grid-cols-2 gap-6">
+            <div class="box">
+                <p class="font-bold text-xs uppercase mb-2">Datos Madre</p>
+                <div class="text-sm">{{formData.madre.nombre}} (DNI: {{formData.madre.dni}})</div>
+            </div>
+            <div class="box">
+                <p class="font-bold text-xs uppercase mb-2">Datos Padre</p>
+                <div class="text-sm">{{formData.padre.nombre}}</div>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <span class="report-label">Acompañante en consulta:</span>
+            <span class="report-value">
+                {{ formData.acompananteTipo.join(', ') }} 
+                <span *ngIf="formData.acompananteNombre"> - {{formData.acompananteNombre}} ({{formData.acompananteVinculo}})</span>
+            </span>
+        </div>
+    </div>
+
+    <!-- IV. INGRESO Y MOTIVOS -->
+    <div class="report-section mb-6">
+        <h3 class="font-bold border-b border-black mb-2 uppercase text-sm">IV. Ingreso y Diagnóstico</h3>
+        <div class="mb-4">
+            <span class="report-label">Modalidad:</span>
+            <span class="report-value">{{formData.modalidadIngreso | titlecase}}</span>
+        </div>
+        <div class="mb-4">
+            <span class="report-label">Motivos de Consulta:</span>
+            <p class="text-sm italic border p-2 rounded bg-gray-50 min-h-[50px] mt-1">{{formData.motivosConsulta}}</p>
+        </div>
+        <div>
+            <span class="report-label">Diagnósticos Presuntivos Marcados:</span>
+            <div class="flex flex-wrap gap-2 mt-1">
+                <span *ngFor="let diag of formData.diagnosticoPresuntivo" class="px-2 py-1 border rounded text-xs font-bold">{{diag}}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- V. INTERVENCIONES -->
+    <div class="report-section mb-6">
+        <h3 class="font-bold border-b border-black mb-2 uppercase text-sm">V. Cronología de Intervenciones</h3>
+        <table class="w-full text-sm text-left border-collapse">
+            <tr class="border-b"><td class="py-1 font-bold">Admisión Referente:</td><td>{{formData.intervenciones.admisionReferente || '-'}}</td></tr>
+            <tr class="border-b"><td class="py-1 font-bold">Virtual Institucional:</td><td>{{formData.intervenciones.virtualInstitucional || '-'}}</td></tr>
+            <tr class="border-b"><td class="py-1 font-bold">Entrevista Afectiva:</td><td>{{formData.intervenciones.afectivo || '-'}}</td></tr>
+            <tr class="border-b"><td class="py-1 font-bold">Entrevista Adolescente:</td><td>{{formData.intervenciones.entrevistaAdolescente || '-'}}</td></tr>
+            <tr class="border-b"><td class="py-1 font-bold">Examen Físico:</td><td>{{formData.intervenciones.examenFisico || '-'}} ({{formData.intervenciones.conForense ? 'Con Forense' : 'Sin Forense'}})</td></tr>
+        </table>
+        
+        <div class="mt-4">
+            <span class="report-label">Antecedentes Históricos:</span>
+            <p *ngIf="formData.antecedentesServicio === 'con_antecedentes'" class="text-sm mt-1">{{formData.resumenIntervencionesPrevias}}</p>
+            <p *ngIf="formData.antecedentesServicio !== 'con_antecedentes'" class="text-sm mt-1">Sin antecedentes previos registrados.</p>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- INSERTAR ESTO DESPUÉS DE LA SECCIÓN V. INTERVENCIONES          -->
+    <!-- ============================================================== -->
+
+    <!-- VI. CLÍNICA Y ESTRATEGIA -->
+    <div class="report-section mb-6">
+        <h3 class="font-bold border-b border-black mb-2 uppercase text-sm">VI. Atención Médica y Estrategia Terapéutica</h3>
+
+        <!-- Bloque 1: Examen Físico y Hallazgos -->
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <div>
+                <span class="report-label">Protocolo de Examen Físico</span>
+                <div class="text-sm mt-1">
+                    <p><span class="font-bold">Paciente explorado:</span> {{formData.atencionMedicaExamen | titlecase}}</p>
+                    <p class="mt-1">
+                        <span class="font-bold">Genitales:</span> 
+                        {{formData.genitalNormal ? 'Dentro de parámetros normales' : 'Ver observaciones'}}
+                    </p>
+                    <div *ngIf="formData.atencionMedicaOtro" class="mt-2 text-xs italic border-l-2 border-black pl-2">
+                        "{{formData.atencionMedicaOtro}}"
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Laboratorios -->
+            <div class="border p-2 rounded">
+                <span class="report-label mb-1">Estado Laboratorio:</span>
+                <span class="font-bold uppercase text-xs block mb-1">{{formData.laboratorioEstado}}</span>
+                <p *ngIf="formData.hallazgosLaboratorio" class="text-xs mt-1">
+                    <b>Hallazgos:</b> {{formData.hallazgosLaboratorio}}
+                </p>
+            </div>
+        </div>
+
+        <!-- Bloque 2: Fotos y Tratamiento -->
+        <div class="mb-4">
+            <span class="report-label">Tratamiento Médico Indicado:</span>
+            <span class="report-value">{{formData.tratamientoIndicado}}</span>
+        </div>
+
+        <div *ngIf="formData.fotografiaConsentimiento.length > 0" class="mb-4">
+            <span class="report-label">Registro Fotográfico (Consentimientos):</span>
+            <p class="text-xs">{{ formData.fotografiaConsentimiento.join(', ') }}</p>
+        </div>
+
+        <!-- Bloque 3: Estrategia y Seguimiento (Caja Gris para resaltar) -->
+        <div class="box mt-4">
+            <span class="report-label block mb-2" style="border-bottom:none;">Estrategia de Seguimiento y Protección</span>
+            
+            <div class="grid grid-cols-2 gap-4 text-sm">
+                <!-- Columna Izq: Turnos y Articulación -->
+                <div>
+                    <div class="mb-2">
+                        <b>Próximo Turno:</b> 
+                        {{formData.estrategiaTurnoCon || 'A confirmar'}} 
+                        <span *ngIf="formData.estrategiaFechaTurno">({{formData.estrategiaFechaTurno | date:'dd/MM/yyyy'}})</span>
+                    </div>
+                    <div *ngIf="formData.coordinacionProteccion" class="mb-2">
+                        <b>Articulación Protección:</b> {{formData.coordinacionProteccion}}
+                    </div>
+                    <div *ngIf="formData.dialogoInterdisciplinario" class="mb-2">
+                        <b>Diálogo Equipo:</b> {{formData.dialogoInterdisciplinario}}
+                    </div>
+                </div>
+
+                <!-- Columna Der: Checkboxes y Medidas -->
+                <div>
+                    <ul class="list-none space-y-1 text-xs">
+                        <li *ngIf="formData.recomiendaTerapiaReferente">☑ Se sugiere terapia al referente familiar</li>
+                        <li *ngIf="formData.espacioGrupal">☑ Derivación a Espacio Grupal SAINNAVV</li>
+                        <li *ngIf="formData.acompanamientoGesell">☑ Acompañamiento en Cámara Gesell</li>
+                        <li *ngIf="formData.derivacionA" class="mt-2">
+                            <b>Derivación Externa:</b> {{formData.derivacionA}}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Medidas de Impedimento (Destacado) -->
+            <div *ngIf="formData.medidasImpedimento" class="mt-3 pt-2 border-t border-gray-300">
+                <span class="text-xs font-bold uppercase text-black">Medidas de Restricción / Impedimento de Contacto:</span>
+                <p class="text-sm font-bold mt-1">{{formData.medidasImpedimento}}</p>
+            </div>
+            
+            <!-- Adjuntos de este paso -->
+            <div *ngIf="formData.archivoAtencionMedica" class="mt-3 text-xs text-gray-500 text-right">
+                (Documentación médica digital adjunta al sistema: {{formData.archivoAtencionMedica}})
+            </div>
+        </div>
+    </div>
+
+    <!-- RENOMBRAR LA SIGUIENTE SECCIÓN A: VII. DICTAMEN PROFESIONAL -->
+
+    <!-- VI. CONCLUSIONES -->
+    <div class="report-section mb-6 break-inside-avoid">
+        <h3 class="font-bold border-b border-black mb-2 uppercase text-sm">VI. Dictamen Profesional</h3>
+        
+        <div class="mb-4">
+            <span class="report-label">Indicadores Hallados:</span>
+            <div class="flex gap-4 text-sm mt-1">
+                <span>Relato: <b>{{formData.indicadoresHallados.includes('Relato') ? 'SI' : 'NO'}}</b></span>
+                <span>Lesiones: <b>{{formData.indicadoresHallados.includes('Lesiones') ? 'SI' : 'NO'}}</b></span>
+            </div>
+            <!-- Detalle lesión -->
+            <div *ngIf="formData.indicadoresHallados.includes('Lesiones')" class="mt-2 text-sm border-l-4 border-black pl-2">
+                <b>Detalle de Lesiones:</b> {{formData.detalleLesionesTexto}}
+            </div>
+        </div>
+
+        <div class="mb-4 box">
+            <span class="report-label">Observaciones Periciales Finales:</span>
+            <p class="text-sm mt-1 whitespace-pre-line">{{formData.observacionesSituacion}}</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mt-4">
+            <div class="border p-2">
+                <span class="report-label block mb-1">Destino Legal</span>
+                <ul class="text-xs list-disc list-inside">
+                    <li *ngIf="formData.destinoLegal.includes('fiscalia')">Fiscalía N° {{formData.fiscaliaNro}}</li>
+                    <li *ngIf="formData.destinoLegal.includes('ota')">OTA</li>
+                    <li *ngIf="formData.destinoLegal.includes('juzgado')">
+                        Juzgado: {{formData.esJuzgadoDeTurno ? 'De Turno' : formData.nombreJuzgadoInterviniente}}
+                    </li>
+                </ul>
+            </div>
+            <div class="border p-2">
+                <span class="report-label block mb-1">Documentación Adjunta</span>
+                <ul class="text-xs list-disc list-inside">
+                    <li *ngFor="let adj of formData.adjuntos">{{adj}} ({{formData.adjuntosNombres[adj] || 'Cargado'}})</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- PIE DE PAGINA (Firmas) -->
+    <div class="mt-20 pt-10 border-t border-black grid grid-cols-4 gap-10 text-center break-inside-avoid">
+        <div>
+            <div class="h-10 border-b border-black w-2/3 mx-auto mb-2"></div>
+            <p class="text-xs uppercase font-bold">Firma Médico/a</p>
+        </div>
+        <div>
+            <div class="h-10 border-b border-black w-2/3 mx-auto mb-2"></div>
+            <p class="text-xs uppercase font-bold">Firma Psicólogo/a</p>
+        </div>
+        <div>
+            <div class="h-10 border-b border-black w-2/3 mx-auto mb-2"></div>
+            <p class="text-xs uppercase font-bold">Firma Trabajo Social</p>
+        </div>
+         <div>
+            <div class="h-10 border-b border-black w-2/3 mx-auto mb-2"></div>
+            <p class="text-xs uppercase font-bold">Firma Enfermería</p>
+    </div>
+</div>
+ 
+  </div>

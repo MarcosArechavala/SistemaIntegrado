@@ -1,0 +1,281 @@
+<div class="min-h-screen bg-slate-100 p-6 pb-24">
+    <div class="max-w-7xl mx-auto space-y-6">
+
+        <!-- HEADER -->
+        <div class="bg-indigo-700 text-white p-6 rounded-2xl shadow-lg flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="bg-white/20 p-3 rounded-xl">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight">SERVICIO SOCIAL</h1>
+                    <p class="text-indigo-200 text-sm font-medium">Gestión de Ficha Social - Hospital AHS</p>
+                </div>
+            </div>
+            
+        </div>
+
+        <!-- 1. BÚSQUEDA E IDENTIFICACIÓN -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="bg-indigo-50 px-6 py-4 border-b border-indigo-100 flex items-center gap-2">
+                <h3 class="text-sm font-black text-indigo-900 uppercase tracking-widest">Identificación del Paciente</h3>
+            </div>
+            
+            <div class="p-6 grid grid-cols-1 md:grid-cols-12 gap-6">
+                <!-- Buscador Unificado -->
+                <div class="md:col-span-12 bg-slate-50 p-4 rounded-xl border border-slate-200 grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-slate-500 mb-1">Tipo Doc</label>
+                        <select [(ngModel)]="formData.tipoDoc" class="w-full p-2.5 bg-white border border-slate-300 rounded-lg text-sm font-bold">
+                            <option *ngFor="let t of options.tipoDoc">{{t}}</option>
+                        </select>
+                    </div>
+                    
+                    <div class="md:col-span-3 relative">
+                        <label class="block text-xs font-bold text-slate-500 mb-1">Número DNI</label>
+                        <input [(ngModel)]="formData.dni" (keyup.enter)="buscar('dni')" placeholder="Ingrese y Enter..." class="w-full p-2.5 bg-white border border-slate-300 rounded-lg text-sm font-bold pr-10 focus:ring-2 ring-indigo-500 outline-none">
+                        <button (click)="buscar('dni')" class="absolute right-2 bottom-2 text-indigo-500 hover:text-indigo-700">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        </button>
+                    </div>
+
+                    <div class="md:col-span-1 flex justify-center pb-3 font-black text-slate-300">O</div>
+
+                    <div class="md:col-span-3 relative">
+                        <label class="block text-xs font-bold text-slate-500 mb-1">N° Historia Clínica</label>
+                        <input [(ngModel)]="formData.hcNumber" (keyup.enter)="buscar('hc')" placeholder="Buscar por HC..." class="w-full p-2.5 bg-white border border-slate-300 rounded-lg text-sm font-bold pr-10 focus:ring-2 ring-indigo-500 outline-none">
+                        <button (click)="buscar('hc')" class="absolute right-2 bottom-2 text-indigo-500 hover:text-indigo-700">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        </button>
+                    </div>
+
+                    <div class="md:col-span-3">
+                        <div class="flex items-center gap-2 h-[42px] bg-white border border-slate-300 rounded-lg p-1">
+                            <button (click)="formData.hcType='Auto'" [class.bg-indigo-100]="formData.hcType=='Auto'" [class.text-indigo-700]="formData.hcType=='Auto'" class="flex-1 rounded font-bold text-xs h-full transition-all">Auto</button>
+                            <button (click)="formData.hcType='Libre'" [class.bg-indigo-100]="formData.hcType=='Libre'" [class.text-indigo-700]="formData.hcType=='Libre'" class="flex-1 rounded font-bold text-xs h-full transition-all">Libre</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Campos de Datos (Protegidos con isLocked) -->
+                <div class="md:col-span-6">
+                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Apellido <span class="text-red-500">*</span></label>
+                    <input [(ngModel)]="formData.apellido" [readonly]="isLocked" [class.bg-slate-100]="isLocked" class="w-full p-3 border rounded-lg font-bold text-slate-700 focus:border-indigo-500 outline-none">
+                </div>
+                <div class="md:col-span-6">
+                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Nombres <span class="text-red-500">*</span></label>
+                    <input [(ngModel)]="formData.nombres" [readonly]="isLocked" [class.bg-slate-100]="isLocked" class="w-full p-3 border rounded-lg font-bold text-slate-700 focus:border-indigo-500 outline-none">
+                </div>
+                <div class="md:col-span-3">
+                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Sexo</label>
+                    <select [(ngModel)]="formData.sexo" class="w-full p-3 bg-white border rounded-lg text-sm font-bold">
+                        <option *ngFor="let s of options.sexo" [value]="s.v">{{s.l}}</option>
+                    </select>
+                </div>
+                <div class="md:col-span-3">
+                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">F. Nacimiento</label>
+                    <input type="date" [(ngModel)]="formData.fechaNacimiento" class="w-full p-3 bg-white border rounded-lg text-sm font-bold text-slate-700">
+                </div>
+                <div class="md:col-span-3">
+                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Nacionalidad</label>
+                    <select [(ngModel)]="formData.nacionalidad" class="w-full p-3 bg-white border rounded-lg text-sm font-bold">
+                        <option *ngFor="let n of options.nacionalidad">{{n}}</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. UBICACIÓN Y CONTACTO -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Dirección -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <h4 class="text-sm font-black text-indigo-900 uppercase mb-4 border-b border-indigo-50 pb-2">Ubicación</h4>
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-[10px] uppercase font-bold text-slate-400">Provincia</label>
+                            <select [(ngModel)]="formData.provincia" class="w-full p-2 border rounded font-bold text-sm"><option *ngFor="let o of options.provincia">{{o}}</option></select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] uppercase font-bold text-slate-400">Departamento</label>
+                            <select [(ngModel)]="formData.departamento" class="w-full p-2 border rounded font-bold text-sm"><option *ngFor="let o of options.departamento">{{o}}</option></select>
+                        </div>
+                    </div>
+                    <div>
+                    <label class="text-[10px] uppercase font-bold text-slate-400">Localidad</label>
+                    <select [(ngModel)]="formData.localidad" class="w-full p-2 border rounded font-bold text-sm">
+                        <option *ngFor="let o of options.localidad" [value]="o">{{o}}</option>
+                    </select>
+                </div>
+                    <div>
+                        <label class="text-[10px] uppercase font-bold text-slate-400">Dirección Exacta</label>
+                        <input [(ngModel)]="formData.direccion" placeholder="Calle, Altura, Barrio..." class="w-full p-2 border rounded font-bold text-sm">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contacto y Familia -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <h4 class="text-sm font-black text-indigo-900 uppercase mb-4 border-b border-indigo-50 pb-2">Contacto y Familiares</h4>
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <input [(ngModel)]="formData.telefono" placeholder="Tel. Celular" class="p-2 border rounded text-sm font-bold">
+                    <input [(ngModel)]="formData.telefonoFijo" placeholder="Tel. Fijo" class="p-2 border rounded text-sm font-bold">
+                </div>
+                
+                <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                    <p class="text-[10px] uppercase font-bold text-slate-400 mb-2">Padres / Tutores</p>
+                    <div class="grid grid-cols-12 gap-2 mb-2">
+                        <input [(ngModel)]="formData.madreNombre" placeholder="Nombre Madre" class="col-span-8 p-2 border rounded text-xs font-bold">
+                        <input [(ngModel)]="formData.madreDoc" placeholder="DNI" class="col-span-4 p-2 border rounded text-xs">
+                    </div>
+                    <div class="grid grid-cols-12 gap-2">
+                        <input [(ngModel)]="formData.padreNombre" placeholder="Nombre Padre" class="col-span-8 p-2 border rounded text-xs font-bold">
+                        <input [(ngModel)]="formData.padreDoc" placeholder="DNI" class="col-span-4 p-2 border rounded text-xs">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- SECCIÓN INTERMEDIA: Datos Clínicos y Obra Social -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <!-- COLUMNA IZQUIERDA: Datos Clínicos -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hover:shadow-md transition-shadow duration-300">
+                <div class="flex items-center gap-2 mb-4 border-b border-slate-100 pb-2">
+                    <svg class="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    <h3 class="text-sm font-black text-slate-700 uppercase tracking-widest">Datos Clínicos</h3>
+                </div>
+
+                <div class="space-y-5">
+                    <!-- Área Programática -->
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Área Programática</label>
+                        <select [(ngModel)]="formData.areaProgramatica" class="w-full p-2.5 bg-white border border-slate-300 rounded-lg text-sm font-bold text-slate-700 outline-none focus:border-rose-500">
+                            <option *ngFor="let area of options.area">{{area}}</option>
+                        </select>
+                    </div>
+
+                    <!-- Alergias (Caja Roja/Rosada) -->
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Alergias Importantes</label>
+                        <textarea 
+                            [(ngModel)]="formData.alergias" 
+                            rows="2" 
+                            placeholder="SIN ALERGIAS CONOCIDAS"
+                            class="w-full p-3 bg-rose-50 border border-rose-200 rounded-lg text-sm font-bold text-rose-800 placeholder-rose-300 focus:ring-2 focus:ring-rose-500 focus:border-transparent outline-none resize-none transition-all">
+                        </textarea>
+                    </div>
+
+                    <!-- Observaciones (Caja Amarilla) -->
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Observaciones Generales</label>
+                        <textarea 
+                            [(ngModel)]="formData.observaciones" 
+                            rows="3" 
+                            class="w-full p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none resize-none transition-all">
+                        </textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COLUMNA DERECHA: Cobertura Social -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hover:shadow-md transition-shadow duration-300">
+                <div class="flex items-center gap-2 mb-4 border-b border-slate-100 pb-2">
+                    <svg class="w-5 h-5 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+                    <h3 class="text-sm font-black text-slate-700 uppercase tracking-widest">Cobertura Social</h3>
+                </div>
+
+                <div class="space-y-5">
+                    <!-- Obra Social Selector -->
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Obra Social</label>
+                        <select [(ngModel)]="formData.obraSocial" class="w-full p-2.5 bg-white border border-slate-300 rounded-lg text-sm font-bold text-slate-700 outline-none focus:border-cyan-500">
+                            <option *ngFor="let os of options.obraSocial">{{os}}</option>
+                        </select>
+                    </div>
+
+                    <!-- Fila Afiliado y Credencial -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Nro Afiliado</label>
+                            <input [(ngModel)]="formData.nroObraSocial" class="w-full p-2.5 border border-slate-300 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Credencial</label>
+                            <input [(ngModel)]="formData.credential" class="w-full p-2.5 border border-slate-300 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent">
+                        </div>
+                    </div>
+
+                    <!-- Separador y Datos del Titular -->
+                    <div class="pt-4 border-t border-slate-100">
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-3">Datos del Titular de la Obra Social</label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Nombre Titular</label>
+                                <input [(ngModel)]="formData.titularNombre" class="w-full p-2.5 border border-slate-300 rounded-lg text-xs font-bold outline-none focus:border-cyan-500">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">DNI Titular</label>
+                                <input [(ngModel)]="formData.titularDni" class="w-full p-2.5 border border-slate-300 rounded-lg text-xs font-bold outline-none focus:border-cyan-500">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 3. DATOS SOCIO-ECONÓMICOS (Pestaña nueva para diferenciar) -->
+        <div class="bg-white rounded-2xl shadow-sm border border-amber-200 border-t-4 border-t-amber-400 p-6">
+            <h3 class="text-lg font-black text-amber-700 uppercase tracking-widest mb-6 flex items-center">
+                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+                Ficha Socio-Económica
+            </h3>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 items-end">
+                <!-- Tipo Vivienda -->
+                <div class="md:col-span-2">
+                    <label class="block text-[10px] uppercase font-bold text-amber-800 mb-1">Tipo de Vivienda</label>
+                    <select [(ngModel)]="formData.vivienda" class="w-full p-2 border border-amber-200 bg-amber-50 rounded font-bold text-sm"><option *ngFor="let o of options.vivienda">{{o}}</option></select>
+                </div>
+
+                <!-- Inputs Numericos -->
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-amber-800 mb-1">Ambientes</label>
+                    <input type="number" [(ngModel)]="formData.numAmbientes" class="w-full p-2 border border-amber-200 rounded font-bold text-sm">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-amber-800 mb-1">Habitantes</label>
+                    <input type="number" [(ngModel)]="formData.habitantes" class="w-full p-2 border border-amber-200 rounded font-bold text-sm">
+                </div>
+
+                <!-- Toggles Rápidos -->
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-amber-800 mb-1">Luz Eléctrica</label>
+                    <div class="flex border rounded overflow-hidden">
+                        <button (click)="formData.luzElectrica='Si'" [class.bg-amber-400]="formData.luzElectrica=='Si'" class="flex-1 py-1 text-xs font-bold transition-all">SI</button>
+                        <button (click)="formData.luzElectrica='No'" [class.bg-slate-200]="formData.luzElectrica=='No'" class="flex-1 py-1 text-xs font-bold transition-all">NO</button>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-amber-800 mb-1">Agua Potable</label>
+                    <select [(ngModel)]="formData.agua" class="w-full p-2 border border-amber-200 rounded font-bold text-xs">
+                        <option *ngFor="let a of options.agua">{{a}}</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAB / Actions -->
+        <div class="fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur border-t border-slate-700 p-4 z-50 flex justify-center md:justify-end gap-4 shadow-2xl">
+            <button (click)="limpiar()" class="px-6 py-3 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-sm transition-all flex items-center">
+                <span class="mr-2 text-xl">🧹</span> Nueva Consulta
+            </button>
+            
+            <button (click)="guardar()" class="px-8 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold text-sm transition-all shadow-lg shadow-indigo-900/50 flex items-center transform active:scale-95">
+                <span class="mr-2 text-xl">💾</span> GUARDAR DATOS
+            </button>
+        </div>
+
+    </div>
+</div>
