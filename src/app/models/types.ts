@@ -7,6 +7,7 @@ export interface FamilyMember {
 }
 
 export interface ParentData {
+  documento: any;
   nombre: string;
   edad: string;
   dni: string;
@@ -18,12 +19,16 @@ export interface ParentData {
 
 export interface FormState {
    idHistoria?: number;
+   idPaciente?: number;  // ID de la tabla Pacientes de SQL
+   idEpisodio?: number;  // ID de la tabla ADMISION (Si es > 0, .NET hará un UPDATE en vez de INSERT)
+   idUsuario?: number;
+   idProfesionalTurno: 0,
   // Profesionales 
   medicoInterviniente: string;
   trabajadorSocial: string;
   psicologo: string;
   enfermero: string;
-
+  medicoForense: string;
   // Datos Paciente
   nombreApellido: string;
   edad: string;
@@ -34,6 +39,8 @@ export interface FormState {
   ultimoControl: string;
   obraSocial: boolean;
   cualObraSocial: string;
+  telefonoCelular: string;
+  telefonoFijo: string;
   escolaridad: string;
 
   // Grupo Familiar
@@ -41,7 +48,7 @@ export interface FormState {
   padre: ParentData;
   otrosConvivientes: FamilyMember[];
 
-  // Acompañante (Variables sin 'ñ' para evitar error NG5002)
+  // Acompañante (Variables sin 'ñ' 2)
   acompananteTipo: string[]; 
   acompananteNombre: string;
   acompananteVinculo: string;
@@ -55,6 +62,8 @@ export interface FormState {
   modalidadIngreso: 'demanda_espontanea' | 'derivacion_institucional' | 'interconsulta';
   institucionDerivacion: string;
   servicioInterconsulta: string;
+  presencialAdmisionObservaciones: string;
+  presencialAbordajeObservaciones: string;
   motivosConsulta: string;
 
   // Diagnostico Presuntivo
@@ -65,6 +74,7 @@ export interface FormState {
   resumenIntervencionesPrevias: string;
   archivoAntecedentes: string | null;
   descripcionArchivo: string; 
+  fechaAntecedente: string;
 
   // Intervenciones
   intervenciones: {
@@ -109,6 +119,10 @@ export interface FormState {
   acompanamientoGesell: boolean; 
   medidasImpedimento: string;
 
+  // NUEVOS CAMPOS DE OBSERVACIONES TIPO TEXTAREA
+  observacionesIntervenciones: string; // Para el Paso 4
+  observacionesEstrategia: string;      // Para el Paso 5
+
   // Conclusión
   conclusionAbordaje: string[];
   indicadoresHallados: string[];
@@ -134,4 +148,10 @@ export interface FormState {
   
   nombreJuzgadoInterviniente: string; // nombre específico
   esJuzgadoDeTurno: boolean;
+  profesionalPaso0: number; // Paso 1: Identificación
+  profesionalPaso1: number; // Paso 2: Grupo Familiar
+  profesionalPaso2: number; // Paso 3: Ingreso
+  profesionalPaso3: number; // Paso 4: Intervenciones
+  profesionalPaso4: number; // Paso 5: Clínica
+  profesionalPaso5: number; // Paso 6: Conclusión
 }

@@ -40,7 +40,7 @@ export class SocialServiceComponent {
     if (!valor) return;
 
     this.isSearching = true;
-    const url = `http://localhost:5000/ServicioSocial/buscar?tipo=${tipo}&valor=${valor}`;
+    const url = `/sainnavv-api/ServicioSocial/buscar?tipo=${tipo}&valor=${valor}`;
 
     this.http.get(url).subscribe({
       next: (data: any) => {
@@ -65,7 +65,7 @@ export class SocialServiceComponent {
 
   guardarFicha() {
     // Si isLocked es true, es una actualización (usando los SPs)
-    const url = `http://localhost:5000/ServicioSocial/guardar`;
+    const url = `/sainnavv-api/ServicioSocial/guardar`;
     
     this.http.post(url, this.formData).subscribe({
       next: (res) => alert('Ficha Social guardada correctamente'),

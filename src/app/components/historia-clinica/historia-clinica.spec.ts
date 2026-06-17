@@ -1,6 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Component } from '@angular/core';
 
-import { HistoriaClinicaComponent } from './historia-clinica.component';
+@Component({
+  selector: 'app-historia-clinica',
+  standalone: true,
+  templateUrl: './historia-clinica.component.html',
+  styleUrls: ['./historia-clinica.component.css']
+})
+export class HistoriaClinicaComponent {
+  constructor() { }
+}
 
 describe('HistoriaClinica', () => {
   let component: HistoriaClinicaComponent;

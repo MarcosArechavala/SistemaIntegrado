@@ -37,7 +37,7 @@ export class LoginComponent {
     // 2. Prender el Loading en el Botón HTML
     this.isLoading = true;
 
-    const url = 'http://localhost:5000/auth/iniciar-sesion';
+    const url = '/api/auth/iniciar-sesion';
     const body = {
       usuario: this.credentials.username,
       clave: this.credentials.password
@@ -92,7 +92,7 @@ export class LoginComponent {
           }
         }
       });
-  }
+ }
 
   togglePasswordVisibility() {
     this.showPassword = !this.showPassword;

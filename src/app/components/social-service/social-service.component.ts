@@ -99,27 +99,33 @@ export class SocialServiceComponent {
     this.loading = true;
     console.log(`🔎 Buscando: ${valor}...`);
 
-    const url = `http://localhost:5000/HistoriaClinica/buscar-paciente?tipo=${tipo}&valor=${valor}`;
+    const url = `/api/HistoriaClinica/buscar-paciente?tipo=${tipo}&valor=${valor}`;
 
     this.http.get(url).subscribe({
       next: (response: any) => {
+        console.log("📥 RESPUESTA SERVIDOR:", response);
+
         if (response) {
           this.isLocked = true;
           
-          // ----------------------------------------------------
-          // 1. DESEMPAQUETAR DATOS (LOCAL vs HOSPITAL)
-          // ----------------------------------------------------
+          // ==============================================================
+          // 1. REINICIAR EL FORMULARIO COMPLETO ANTES DE MAPEAR (LA SOLUCIÓN)
+          // Esto limpia todos los campos del paciente anterior
+          // ==============================================================
+          this.formData = { ...initialSocialData }; 
+          // ==============================================================
+
           let datosFuente: any = {};
 
           if (response.origen === 'local' && response.datos) {
-              // CASO A: HISTORIA LOCAL (Viene el JSON completo guardado antes)
+              console.log("📂 Detectado registro LOCAL. Desempaquetando JSON...");
               try {
                   datosFuente = JSON.parse(response.datos);
                   this.formData.idPaciente = response.idHistoria; 
               } catch (err) { console.error("Error JSON local", err); }
           } 
           else {
-              // CASO B: API EXTERNA HOSPITAL (Datos básicos nuevos)
+              console.log("globe Detectado registro EXTERNO (Hospital).");
               datosFuente = response;
               this.formData.idPaciente = undefined; 
           }
@@ -257,7 +263,7 @@ export class SocialServiceComponent {
         return alert('Datos mínimos requeridos: Apellido y DNI.');
     }
 
-    const url = `http://localhost:5000/ServicioSocial/guardar`;
+    const url = `/ServicioSocial/guardar`;
     
     this.http.post(url, this.formData).subscribe({
         next: (res) => alert('Ficha Social guardada/actualizada correctamente.'),
