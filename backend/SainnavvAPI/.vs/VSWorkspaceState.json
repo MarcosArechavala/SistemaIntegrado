@@ -1,0 +1,13 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\Controllers",
+    "\\Data",
+    "\\Models",
+    "\\Services",
+    "\\wwwroot",
+    "\\wwwroot\\uploads"
+  ],
+  "SelectedNode": "\\Controllers\\HistoriaClinicaController.cs",
+  "PreviewInSolutionExplorer": false
+}

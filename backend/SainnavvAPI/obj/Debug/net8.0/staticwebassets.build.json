@@ -1,0 +1,19 @@
+{
+  "Version": 1,
+  "Hash": "9WFm80pgzIu22ZKYa8iCF/FURbaePzCdPpwKI+iX6eI=",
+  "Source": "SainnavvAPI",
+  "BasePath": "_content/SainnavvAPI",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [
+    {
+      "Name": "SainnavvAPI\\wwwroot",
+      "Source": "SainnavvAPI",
+      "ContentRoot": "C:\\Users\\marechavala\\source\\repos\\sainnavvapi\\wwwroot\\",
+      "BasePath": "_content/SainnavvAPI",
+      "Pattern": "**"
+    }
+  ],
+  "Assets": []
+}
