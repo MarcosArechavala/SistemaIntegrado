@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { FormState, ParentData } from '../../models/types';
 import { HttpClient } from '@angular/common/http';
 import { ChangeDetectorRef,  } from '@angular/core';
+import { finalize } from 'rxjs/operators';
 
 
 @Component({
@@ -22,6 +23,15 @@ export class MedicalFormComponent {
   ngOnInit() {
     this.checkPermissions();
     this.cargarProfesionalesServicio();
+  }
+
+  selectedTipoIntervencion: string = ''; // 'Familiar', 'Psicologica', 'Medica'
+  profesionalesSeleccionados: number[] = [];
+
+  toggleProfesional(id: number) {
+      const index = this.profesionalesSeleccionados.indexOf(id);
+      if (index > -1) this.profesionalesSeleccionados.splice(index, 1);
+      else this.profesionalesSeleccionados.push(id);
   }
 
   checkPermissions() {
@@ -67,13 +77,13 @@ export class MedicalFormComponent {
  
 
   cargarProfesionalesServicio() {
-    const url = '/api/HistoriaClinica/profesionales-servicio';
+    const url = 'http://localhost:5000/HistoriaClinica/profesionales-servicio';
     this.http.get(url).subscribe({
       next: (res: any) => {
         this.profesionalesServicio = res;
         this.cdr.detectChanges();
       },
-      error: (err) => console.error("Error al cargar profesionales del servicio 100", err)
+      error: (err) => console.error("Error al cargar profesionales del servicio ", err)
     });
   }
 
@@ -86,9 +96,9 @@ export class MedicalFormComponent {
     idEpisodio: 0,
     idUsuario: 0,
     idProfesionalTurno: 0,
-    medicoInterviniente: '', trabajadorSocial: '', psicologo: '', enfermero: '', medicoForense: '',
+    equipo: { medico: 0, trabajadorSocial: 0, psicologo: 0, enfermero: 0 }, medicoForense: '',
     nombreApellido: '', edad: '', fechaNacimiento: '', dni: '', domicilio: '', centroSalud: '', ultimoControl: '',telefonoCelular: '',
-    telefonoFijo: '', 
+    telefonoFijo: '',  
     obraSocial: false, cualObraSocial: '', escolaridad: '',
     madre: { ...this.initialParentData },
     padre: { ...this.initialParentData },
@@ -116,6 +126,9 @@ export class MedicalFormComponent {
     nombreJuzgadoInterviniente: '',
     esJuzgadoDeTurno: false, profesionalPaso0: 0, profesionalPaso1: 0, profesionalPaso2: 0, profesionalPaso3: 0, profesionalPaso4: 0, profesionalPaso5: 0 
   };
+
+  
+
   constructor(private http: HttpClient, private cdr: ChangeDetectorRef) {}
     calcularEdad(fechaNacimiento: string): string {
       if (!fechaNacimiento) return '';
@@ -137,71 +150,91 @@ export class MedicalFormComponent {
       return edad.toString();
     }
 
-      buscarPaciente(tipo: string, valor: string) {
+
+     
+
+     // Variables de control de vista
+  vistaActual: 'buscador' | 'formulario' = 'buscador';
+  episodiosPaciente: any[] = []; // Aquí guardaremos los episodios previos
+
+  // Modifica tu función buscarPaciente para que NO entre directo al formulario, sino que muestre la grilla:
+          
+
+   cargarEpisodiosDelPaciente(idPaciente: number) {
+    const url = `http://localhost:5000/HistoriaClinica/episodios/${idPaciente}`;
+    this.http.get(url).subscribe({
+      next: (res: any) => {
+        this.episodiosPaciente = res; // Guardamos los episodios que vienen de la BD
+        this.cdr.detectChanges(); // Pintamos la tabla
+      },
+      error: (err) => console.error("Error al cargar episodios", err)
+    });
+  }
+
+  // 2. CORRECCIÓN: Botón NUEVO EPISODIO
+  iniciarNuevoEpisodio() {
+    this.formData.idEpisodio = 0; // Obligamos a que sea un INSERT en la BD
+    this.activeStep = 0;
+    this.vistaActual = 'formulario';
+    this.cdr.detectChanges(); // <--- ESTO FALTABA: Obliga a Angular a mostrar el formulario YA
+  }
+
+  // 3. CORRECCIÓN: Botón CONTINUAR CARGA
+  continuarEpisodio(episodio: any) {
+    // Como ahora usamos SQL relacional y no JSON, al continuar un episodio 
+    // simplemente le decimos al sistema el ID del episodio.
+    // Al guardar, el backend actualizará este mismo episodio en lugar de crear uno nuevo.
+    this.formData.idEpisodio = episodio.idEpisodio;
+    
+    this.activeStep = 0; 
+    this.vistaActual = 'formulario';
+    this.cdr.detectChanges(); // <--- ESTO FALTABA
+    
+    alert(`Continuando el episodio #${episodio.idEpisodio}. Todo lo que guarde se asociará a esta admisión.`);
+  }
+
+  volverAlBuscador() {
+    this.vistaActual = 'buscador';
+    this.formData = this.initialState();
+    this.episodiosPaciente = [];
+  }
+
+          buscarPaciente(tipo: string, valor: string) {
           if (!valor) return;
-          this.buscandoPaciente = true;
+    this.buscandoPaciente = true;
 
-          // URL de tu Backend .NET
-          const url = `/api/HistoriaClinica/buscar-paciente?tipo=${tipo}&valor=${valor}`;
+    // Respaldo de usuario logueado
+    const idMedicoActual = this.formData.idUsuario; 
+    this.formData = this.initialState(); 
+    this.formData.idUsuario = idMedicoActual; 
 
-          this.http.get(url).subscribe({
-            next: (resp: any) => {
-              this.buscandoPaciente = false; // Apagamos el loader inmediatamente
+    const url = `http://localhost:5000/HistoriaClinica/buscar-paciente?tipo=${tipo}&valor=${valor}`;
 
-              // =====================================================================
-              // 1. RESPALDO DEL MÉDICO LOGUEADO Y RESETEO COMPLETO (LA CLAVE)
-              // Guardamos quién es el médico que está operando antes de vaciar el formulario,
-              // garantizando un lienzo limpio para el nuevo paciente.
-              // =====================================================================
-              const idMedicoActual = this.formData.idUsuario; 
-              
-              // Vaciamos el formData completo
-              this.formData = this.initialState(); 
-              
-              // Le devolvemos el médico logueado al formulario limpio
-              this.formData.idUsuario = idMedicoActual; 
-              // =====================================================================
+    this.http.get(url).subscribe({
+      next: (resp: any) => {
+        this.buscandoPaciente = false;
+        
+        this.formData.idHistoria = 0;
+        this.formData.idPaciente = resp.idPaciente || 0;
+        this.mapearDatosFisicos(resp);
 
-              // CASO A: El paciente ya tiene una historia SAINNAVV guardada (Edición / JSON)
-              if (resp.origen === 'local') {
-                const datosGuardados = JSON.parse(resp.datos);
-                
-                // Cargamos el JSON guardado encima de la estructura limpia de inicio
-                this.formData = {
-                  ...this.initialState(), // Estructura base
-                  ...datosGuardados,
-                  idHistoria: resp.idHistoria,
-                  idPaciente: resp.idPaciente,
-                  idEpisodio: resp.idEpisodio,
-                  idUsuario: idMedicoActual // Aseguramos mantener al médico logueado
-                };
-
-                console.log('Cargando historia médica guardada ID: ' + resp.idHistoria);
-              } 
-              
-              // CASO B: Es una búsqueda fresca (Local SQL o API Hospital)
-              else {
-                this.formData.idHistoria = 0;
-                this.formData.idPaciente = resp.idPaciente || 0; // Guardamos el ID de la base de datos
-
-                // Mapeamos los datos sobre el formulario limpio
-                this.mapearDatosFisicos(resp);
-              }
-
-              // Cargamos el historial de evoluciones diarias del paciente (Paso 4)
-              this.cargarHistorialIntervenciones(); 
-              
-              this.cdr.detectChanges(); // Forzamos actualización visual
-
-              // Auto-foco al nombre del paciente
-              setTimeout(() => document.getElementById('inputNombrePaciente')?.focus(), 100);
-            },
-            error: (err) => {
-              this.buscandoPaciente = false;
-              alert('No se encontró el paciente en el sistema.');
-            }
-          });
+        // --- ESTA ES LA MAGIA: LLAMAMOS A LOS EPISODIOS REALES ---
+        if ((this.formData?.idPaciente ?? 0) > 0) {
+            this.cargarEpisodiosDelPaciente(this.formData.idPaciente ?? 0);
         }
+
+        // Nos aseguramos de quedarnos en la vista del buscador para ver la grilla
+        this.vistaActual = 'buscador';
+        this.cdr.detectChanges(); 
+      },
+      error: (err) => {
+        this.buscandoPaciente = false;
+        alert('No se encontró el paciente en el sistema.');
+      }
+          });
+
+        }
+
 
   /**
    * Esta función realiza el mapeo de los datos que vienen de la API/SQL
@@ -221,10 +254,12 @@ export class MedicalFormComponent {
     this.formData.idHistoria = data.idHistoria || 0;
     this.formData.idEpisodio = data.idEpisodio || 0;
     this.formData.idUsuario = data.idUsuario || this.formData.idUsuario || 0; // Mantenemos el ID de usuario actual si no viene del backend
-    this.formData.medicoInterviniente = data.medicoInterviniente || '';
-    this.formData.trabajadorSocial = data.trabajadorSocial || '';
-    this.formData.psicologo = data.psicologo || '';
-    this.formData.enfermero = data.enfermero || '';
+    this.formData.equipo = {
+      medico: data.medicoInterviniente || 0,
+      trabajadorSocial: data.trabajadorSocial || 0,
+      psicologo: data.psicologo || 0,
+      enfermero: data.enfermero || 0
+    };
     this.formData.medicoForense = data.medicoForense || '';
     
     // NUEVO: Mapear los antecedentes clínicos del paciente recuperados de la BD
@@ -279,7 +314,7 @@ export class MedicalFormComponent {
           idEpisodio: 0,
           idUsuario: 0,
           idProfesionalTurno: 0,
-          medicoInterviniente: '', trabajadorSocial: '', psicologo: '', enfermero: '',
+          equipo: { medico: 0, trabajadorSocial: 0, psicologo: 0, enfermero: 0 },
           nombreApellido: '', edad: '', fechaNacimiento: '', dni: '', domicilio: '', centroSalud: '', ultimoControl: '', telefonoCelular: '', telefonoFijo: '',
           obraSocial: false, cualObraSocial: '', escolaridad: '', medicoForense: '',
           madre: { ...this.initialParentData },
@@ -388,7 +423,7 @@ export class MedicalFormComponent {
     }
 
     // Ruta de tu API local (Recuerda cambiar a la IP del Servidor IIS en producción: http://10.4.50.70/HistoriaClinica/...)
-    const baseUrl = '/api/HistoriaClinica';
+    const baseUrl = 'http://localhost:5000/HistoriaClinica';  
     const url = `${baseUrl}/descargar-pdf?nombre=${encodeURIComponent(nombreArchivo)}`;
 
     // Abre una nueva pestaña en el navegador en segundo plano
@@ -434,6 +469,13 @@ export class MedicalFormComponent {
   // Opciones
   acompananteOptions = ['Madre', 'Padre', 'Abuelo/a', 'Tío/a', 'Referente Afectivo', 'Otro'];
 
+  // Opciones para el selector de "Paciente explorado" con tipos correctos
+  pacienteOptions: { label: string; val: 'niña' | 'niño' | 'adolescente' }[] = [
+    { label: 'Niña', val: 'niña' },
+    { label: 'Niño', val: 'niño' },
+    { label: 'Adolescente', val: 'adolescente' },
+  ];
+
   parentLabels: {[key: string]: string} = {
     nombre: 'Nombre y Apellido', edad: 'Edad', dni: 'D.N.I.', 
     nivelInstruccion: 'Nivel de Instrucción', ocupacion: 'Ocupación', 
@@ -448,8 +490,7 @@ export class MedicalFormComponent {
     { label: "Conductas sexualizadas abusivas", color: "text-rose-600" },
     { label: "Incesto paterno filial", color: "text-rose-800" },
     { label: "Acoso sexual", color: "text-indigo-600" },
-    { label: "Ciberacoso / Grooming", color: "text-indigo-700" },
-    { label: "Violación", color: "text-red-700 font-black" }, // Destacado
+    { label: "Ciberacoso / Grooming", color: "text-indigo-700" }, // Destacado
     { label: "Explotación sexual", color: "text-red-800 font-black" }, // Destacado
     { label: "Embarazo forzado (Z33)", color: "text-purple-600" },
     { label: "Munchausen by Proxy (T74.8)", color: "text-blue-600" },
@@ -473,7 +514,7 @@ export class MedicalFormComponent {
     this.cargandoHistorial = true;
     
     // Cambiamos el endpoint para pasar idPaciente
-    const url = `/api/HistoriaClinica/intervenciones/${this.formData.idPaciente}`;
+    const url = `http://localhost:5000/HistoriaClinica/intervenciones/${this.formData.idPaciente}`;
     
     this.http.get(url).subscribe({
       next: (res: any) => {
@@ -492,8 +533,8 @@ export class MedicalFormComponent {
   cambiarPaso(nuevoPaso: number) {
     this.stepChange.emit(nuevoPaso);
     
-    // Al entrar al paso 4 (index 3), si hay idPaciente, cargamos
-    if (nuevoPaso === 3 && this.formData.idPaciente && this.formData.idPaciente > 0) {
+    // Ahora Historial está en el Paso 5 (Index 4)
+    if (nuevoPaso === 4 && this.formData.idPaciente && this.formData.idPaciente > 0) {
       this.cargarHistorialIntervenciones();
     }
   }
@@ -526,16 +567,17 @@ export class MedicalFormComponent {
     this.cdr.detectChanges();
   }
 
-  // Filtra la lista de intervenciones según la fecha que elija el médico en el input
-  getHistorialFiltrado() {
+
+
+getHistorialFiltrado() {
     if (!this.filtroFechaHistorico) {
-      return this.historialIntervenciones;
+        return this.historialIntervenciones;
     }
-    // Compara el inicio de la fecha (yyyy-MM-dd) con el filtro seleccionado
+    // Comparamos el string de fecha (ej: '2026-06-22') con el item.fecha que viene del backend
     return this.historialIntervenciones.filter(item => 
-      item.fecha.startsWith(this.filtroFechaHistorico)
+        item.fecha.includes(this.filtroFechaHistorico)
     );
-  }
+}
 
   // Modificación del Guardado Rápido (Guardar progreso de paso)
   guardarPasoActual() {
@@ -552,7 +594,7 @@ export class MedicalFormComponent {
     if (this.selectedFileAntecedentes) formDataApi.append('ArchivoAntecedentes', this.selectedFileAntecedentes);
     if (this.selectedFileClinica) formDataApi.append('ArchivoClinica', this.selectedFileClinica);
 
-     const url = '/api/HistoriaClinica';
+     const url = 'http://localhost:5000/HistoriaClinica';
 
     this.http.post(url, formDataApi).subscribe({
       next: (response: any) => {
@@ -600,10 +642,13 @@ export class MedicalFormComponent {
     const userObj = rawUser ? JSON.parse(rawUser) : null;
     
     // Sincronizamos ID del usuario actual
-    this.formData.idUsuario = userObj?.codigoUsuario ? parseInt(userObj.codigoUsuario) : 1; 
+    this.formData.idUsuario = userObj?.codigoUsuario ? parseInt(userObj.codigoUsuario) : 1;
+
+    // Creamos payload temporal con la lista de profesionales seleccionados
+    const payload = { ...this.formData, profesionalesSeleccionados: this.profesionalesSeleccionados };
 
     const formDataApi = new FormData();
-    formDataApi.append('JsonData', JSON.stringify(this.formData));
+    formDataApi.append('JsonData', JSON.stringify(payload));
 
     // Adjuntar archivos si existen
     if (this.selectedFileAntecedentes) {
@@ -621,15 +666,16 @@ export class MedicalFormComponent {
     // ========================================================
     // CORRECCIÓN DE LA URL: Quitar el "/api"
     // ========================================================
-    const url = '/api/HistoriaClinica'; // 
+    const url = 'http://localhost:5000/HistoriaClinica'; // 
     // ========================================================
 
     this.http.post(url, formDataApi).subscribe({
       next: (response: any) => {
         this.buscandoPaciente = false;
         this.formData.idEpisodio = response.episodio; 
+        
         this.cdr.detectChanges();
-        alert('Datos relacionales de la consulta y archivos guardados correctamente.');
+        alert('Datos de la consulta y archivos guardados correctamente.');
       },
       error: (error) => {
         this.buscandoPaciente = false;
@@ -638,6 +684,18 @@ export class MedicalFormComponent {
       }
     });
   }
- 
+ // Helper para el PDF: Devuelve el nombre completo del profesional dado su ID
+  getNombreProfesional(idProf: number): string {
+    if (!idProf || idProf === 0) return 'No intervino';
+    
+    // Buscamos el profesional en la lista que nos dio la API
+    const profesional = this.profesionalesServicio.find(p => p.idProfesional === Number(idProf));
+    
+    if (profesional) {
+      return `${profesional.apellido} ${profesional.nombreProf}`;
+    }
+    
+    return 'Profesional no encontrado';
+  }
   
 }

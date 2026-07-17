@@ -94,31 +94,21 @@
         ::-webkit-scrollbar { display: none; }
     }
 </style>
+
+
+
 <div class="space-y-12">
   
     <!-- STEP 0: Identificación -->
     <section *ngIf="activeStep === 0" class="animate-in fade-in slide-in-from-bottom-6 duration-500">
-        
-    <div class="mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 no-print">
-    <span class="text-xs font-black text-slate-500 uppercase tracking-wider">Profesional Responsable de esta sección:</span>
-    <select [disabled]="isReadOnly" [(ngModel)]="formData.profesionalPaso0" class="p-2.5 bg-white border-2 border-slate-200 rounded-xl font-bold text-xs text-slate-700 outline-none focus:border-indigo-500">
-        <option [value]="0">-- Seleccionar Profesional --</option>
-        <!-- Notar el uso de idProfesional, apellido y nombreProf que devuelve tu API -->
-        <option *ngFor="let p of profesionalesServicio" [value]="p.idProfesional">
-            {{p.apellido}} {{p.nombreProf}}
-        </option>
-    </select>
-</div>
 
-      
-  
        <div class="mb-12 border-t border-slate-100 pt-12">
-        <h2 class="text-2xl font-black text-slate-900 mb-6">Datos Primarios del Paciente</h2>
+        <h2 class="text-2xl font-black text-slate-900 mb-6">Datos del Paciente</h2>
         <!-- Buscador de Pacientes -->
       <div class="mb-8 bg-indigo-50 p-6 rounded-3xl border border-indigo-100 shadow-sm animate-in slide-in-from-top-4">
         <h3 class="text-sm font-black text-indigo-900 uppercase tracking-widest mb-4 flex items-center">
              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
-             Importar Paciente desde Sistema Central
+             Importar Paciente desde Sistema 
         </h3>
         
    <div class="flex flex-col md:flex-row gap-4">
@@ -129,6 +119,64 @@
                     <option value="hc">Por Historia Clínica</option>
                 </select>
             </div>
+
+             <div *ngIf="formData.idPaciente && formData.idPaciente > 0" class="bg-white p-8 rounded-[32px] shadow-xl border border-slate-200">
+        
+        <!-- Tarjeta Resumen del Paciente -->
+        <div class="flex items-center gap-4 p-4 bg-indigo-50 border border-indigo-100 rounded-2xl mb-8">
+            <div class="w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center font-black text-xl">
+                {{formData.nombreApellido.charAt(0)}}
+            </div>
+            <div>
+                <h3 class="text-lg font-black text-indigo-900">{{formData.nombreApellido}}</h3>
+                <p class="text-sm font-bold text-indigo-600">DNI: {{formData.dni}} | Edad: {{formData.edad}} años</p>
+            </div>
+        </div>
+
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-black text-slate-800">Episodios / Atenciones</h3>
+            <button (click)="iniciarNuevoEpisodio()" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition-all flex items-center">
+                <span class="text-lg mr-2">+</span> NUEVO EPISODIO
+            </button>
+        </div>
+
+        <!-- Grilla -->
+        <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-slate-100 text-slate-500 font-black uppercase text-[10px] tracking-widest">
+                    <tr>
+                        <th class="p-4">ID</th>
+                        <th class="p-4">Fecha Inicio</th>
+                        <th class="p-4">Motivo Principal</th>
+                        <th class="p-4">Estado</th>
+                        <th class="p-4 text-right">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let ep of episodiosPaciente" class="border-t border-slate-100 hover:bg-slate-50 transition-colors">
+                        <td class="p-4 font-bold text-slate-700">#{{ep.idEpisodio}}</td>
+                        <td class="p-4 font-medium">{{ep.fecha}}</td>
+                        <td class="p-4 text-slate-600">{{ep.motivo}}</td>
+                        <td class="p-4">
+                            <span class="px-3 py-1 bg-amber-100 text-amber-700 font-bold text-[10px] uppercase rounded-full">
+                                {{ep.estado}}
+                            </span>
+                        </td>
+                        <td class="p-4 text-right">
+                            <button (click)="continuarEpisodio(ep)" class="px-4 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-bold rounded-lg transition-all text-xs">
+                                Continuar Carga ➡
+                            </button>
+                        </td>
+                    </tr>
+                    <tr *ngIf="episodiosPaciente.length === 0">
+                        <td colspan="5" class="p-8 text-center text-slate-400 font-medium italic">
+                            No hay episodios previos. Inicie uno nuevo.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
             
             <!-- Input Valor (Limpio, solo busca al dar ENTER) -->
             <div class="md:w-2/4">
@@ -288,16 +336,7 @@
    <!-- STEP 1: Grupo Familiar (Visual Paso 2) -->
     <section *ngIf="activeStep === 1" class="animate-in fade-in slide-in-from-bottom-6 duration-500">
 
-        <div class="mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 no-print">
-            <span class="text-xs font-black text-slate-500 uppercase tracking-wider">Profesional Responsable de esta sección:</span>
-            <select [disabled]="isReadOnly" [(ngModel)]="formData.profesionalPaso0" class="p-2.5 bg-white border-2 border-slate-200 rounded-xl font-bold text-xs text-slate-700 outline-none focus:border-indigo-500">
-                <option [value]="0">-- Seleccionar Profesional --</option>
-                <!-- Notar el uso de idProfesional, apellido y nombreProf que devuelve tu API -->
-                <option *ngFor="let p of profesionalesServicio" [value]="p.idProfesional">
-                    {{p.apellido}} {{p.nombreProf}}
-                </option>
-            </select>
-        </div>
+       
         
         <div class="mb-10">
             <h2 class="text-2xl font-black text-slate-900 mb-2">Contexto Familiar</h2>
@@ -506,16 +545,69 @@
   
     <!-- STEP 2: Ingreso -->
     <section *ngIf="activeStep === 2" class="animate-in fade-in slide-in-from-bottom-6 duration-500">
-        <div class="mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 no-print">
-            <span class="text-xs font-black text-slate-500 uppercase tracking-wider">Profesional Responsable de esta sección:</span>
-            <select [disabled]="isReadOnly" [(ngModel)]="formData.profesionalPaso0" class="p-2.5 bg-white border-2 border-slate-200 rounded-xl font-bold text-xs text-slate-700 outline-none focus:border-indigo-500">
-                <option [value]="0">-- Seleccionar Profesional --</option>
-                <!-- Notar el uso de idProfesional, apellido y nombreProf que devuelve tu API -->
-                <option *ngFor="let p of profesionalesServicio" [value]="p.idProfesional">
-                    {{p.apellido}} {{p.nombreProf}}
-                </option>
-            </select>
+
+        <!-- ========================================================= -->
+        <!-- NUEVO: EQUIPO INTERVINIENTE (UX/UI Premium) -->
+        <!-- ========================================================= -->
+        <div class="mb-12 border border-indigo-100 bg-indigo-50/30 rounded-[32px] p-8 shadow-sm">
+            <h3 class="text-lg font-black text-indigo-900 uppercase tracking-widest mb-6 flex items-center">
+                <svg class="w-6 h-6 mr-3 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                Equipo Profesional Interviniente
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                
+                <!-- 1. Médico -->
+                <div class="bg-white p-5 rounded-2xl border border-indigo-100 shadow-sm hover:border-indigo-300 transition-all">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="bg-blue-100 p-2 rounded-lg text-blue-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg></div>
+                        <label class="text-xs font-bold text-slate-600 uppercase">Médico/a</label>
+                    </div>
+                    <select [disabled]="isReadOnly" [(ngModel)]="formData.equipo.medico" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 outline-none focus:ring-2 ring-indigo-500">
+                        <option [value]="0">No intervino</option>
+                        <option *ngFor="let p of profesionalesServicio" [value]="p.idProfesional">{{p.apellido}} {{p.nombreProf}}</option>
+                    </select>
+                </div>
+
+                <!-- 2. Psicólogo -->
+                <div class="bg-white p-5 rounded-2xl border border-indigo-100 shadow-sm hover:border-indigo-300 transition-all">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="bg-purple-100 p-2 rounded-lg text-purple-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg></div>
+                        <label class="text-xs font-bold text-slate-600 uppercase">Psicólogo/a</label>
+                    </div>
+                    <select [disabled]="isReadOnly" [(ngModel)]="formData.equipo.psicologo" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 outline-none focus:ring-2 ring-indigo-500">
+                        <option [value]="0">No intervino</option>
+                        <option *ngFor="let p of profesionalesServicio" [value]="p.idProfesional">{{p.apellido}} {{p.nombreProf}}</option>
+                    </select>
+                </div>
+
+                <!-- 3. Trabajo Social -->
+                <div class="bg-white p-5 rounded-2xl border border-indigo-100 shadow-sm hover:border-indigo-300 transition-all">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="bg-emerald-100 p-2 rounded-lg text-emerald-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg></div>
+                        <label class="text-xs font-bold text-slate-600 uppercase">Trabajo Social</label>
+                    </div>
+                    <select [disabled]="isReadOnly" [(ngModel)]="formData.equipo.trabajadorSocial" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 outline-none focus:ring-2 ring-indigo-500">
+                        <option [value]="0">No intervino</option>
+                        <option *ngFor="let p of profesionalesServicio" [value]="p.idProfesional">{{p.apellido}} {{p.nombreProf}}</option>
+                    </select>
+                </div>
+
+                <!-- 4. Enfermería -->
+                <div class="bg-white p-5 rounded-2xl border border-indigo-100 shadow-sm hover:border-indigo-300 transition-all">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="bg-rose-100 p-2 rounded-lg text-rose-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg></div>
+                        <label class="text-xs font-bold text-slate-600 uppercase">Enfermero/a</label>
+                    </div>
+                    <select [disabled]="isReadOnly" [(ngModel)]="formData.equipo.enfermero" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 outline-none focus:ring-2 ring-indigo-500">
+                        <option [value]="0">No intervino</option>
+                        <option *ngFor="let p of profesionalesServicio" [value]="p.idProfesional">{{p.apellido}} {{p.nombreProf}}</option>
+                    </select>
+                </div>
+
+            </div>
         </div>
+       
       <div class="mb-10">
           <h2 class="text-2xl font-black text-slate-900 mb-2">Ingreso y Evaluación Inicial</h2>
           <p class="text-slate-500 text-sm">Contexto de la consulta y sospecha diagnóstica</p>
@@ -550,12 +642,12 @@
 
                          <input *ngIf="$any(mod.id) === 'presencial_Admision'"
                           class="mt-4 w-full px-4 py-3 bg-white border-2 border-indigo-200 rounded-xl font-bold animate-in slide-in-from-top-1"
-                          placeholder="¿Qué institución deriva?"
+                          
                           [(ngModel)]="$any(formData).presencialAdmisionObservaciones">
 
                          <input *ngIf="$any(mod.id) === 'presencial_Abordaje'"
                           class="mt-4 w-full px-4 py-3 bg-white border-2 border-indigo-200 rounded-xl font-bold animate-in slide-in-from-top-1"
-                          placeholder="¿Qué institución deriva?"
+                          
                           [(ngModel)]="$any(formData).presencialAbordajeObservaciones">
 
                           
@@ -600,546 +692,388 @@
     
     <!-- STEP 3: Intervenciones (Paso 4 Visual) -->
     <!-- STEP 3: Intervenciones -->
-<section *ngIf="activeStep === 3" class="animate-in fade-in slide-in-from-bottom-6 duration-500">
-
-    <div class="mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 no-print">
-    <span class="text-xs font-black text-slate-500 uppercase tracking-wider">Profesional Responsable de esta sección:</span>
-    <select [disabled]="isReadOnly" [(ngModel)]="formData.profesionalPaso0" class="p-2.5 bg-white border-2 border-slate-200 rounded-xl font-bold text-xs text-slate-700 outline-none focus:border-indigo-500">
-        <option [value]="0">-- Seleccionar Profesional --</option>
-        <!-- Notar el uso de idProfesional, apellido y nombreProf que devuelve tu API -->
-        <option *ngFor="let p of profesionalesServicio" [value]="p.idProfesional">
-            {{p.apellido}} {{p.nombreProf}}
-        </option>
-    </select>
-</div>
-
-    <div class="mb-8">
-      <h2 class="text-2xl font-black text-slate-900 mb-2">Registro de Intervenciones</h2>
-      <p class="text-slate-500 text-sm">Cronología de actuaciones y modalidades de abordaje</p>
-    </div>
-
-    <!-- NUEVO: PANEL DE CONSULTA DE HISTORIAL DIARIO CON FILTRADO POR FECHA -->
-    <div *ngIf="formData.idPaciente && formData.idPaciente > 0" class="mb-8 bg-slate-900 text-white p-6 rounded-[32px] border border-slate-800 shadow-xl relative overflow-hidden">
-        <div class="absolute top-0 right-0 p-6 text-white/5">
-            <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.8 2.8a1 1 0 101.414-1.414L11 11.586V6z"/></svg>
+<!-- ================================================================ -->
+    <!-- STEP 4: ANTECEDENTES (Índice 3) -->
+    <!-- ================================================================ -->
+    <section *ngIf="activeStep === 3" class="animate-in fade-in slide-in-from-bottom-6 duration-500">
+        <div class="mb-8">
+            <h2 class="text-2xl font-black text-slate-900 mb-2">Evaluación de Riesgo y Antecedentes</h2>
+            <p class="text-slate-500 text-sm">Registro de información clínica previa</p>
         </div>
-        
-        <!-- Header con Input de Búsqueda por fecha -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 border-b border-slate-800 pb-4 relative z-10">
-            <h3 class="text-sm font-black text-indigo-300 uppercase tracking-widest flex items-center">
-                ⌛ Historial de Evoluciones Diarias Registradas
-            </h3>
-            <!-- FILTRADO POR FECHA -->
-            <div class="flex items-center gap-2">
-                <span class="text-xs text-indigo-200 font-bold">Buscar por Fecha:</span>
-                <input type="date" 
-                       [(ngModel)]="filtroFechaHistorico" 
-                       class="p-2 bg-indigo-950 border border-indigo-700 rounded-xl text-xs text-white font-bold outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
-                <button *ngIf="filtroFechaHistorico" 
-                        (click)="filtroFechaHistorico = ''" 
-                        class="text-xs text-indigo-400 hover:text-white underline">
-                    Limpiar Filtro
-                </button>
+
+        <!-- SELECTOR DE PROFESIONAL (Asociado a profesionalPaso3 para mantener Backend intacto) -->
+       
+
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm h-full flex flex-col">
+            <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-4">Antecedentes Previos</label>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+                 <button [disabled]="isReadOnly" (click)="formData.antecedentesServicio = 'sin_antecedentes'" [class]="formData.antecedentesServicio === 'sin_antecedentes' ? 'bg-indigo-600 border-indigo-600 text-white shadow-md' : 'bg-slate-50 text-slate-600 border-slate-200'" class="text-center px-5 py-4 rounded-xl border-2 text-sm font-black transition-all disabled:opacity-75 disabled:cursor-not-allowed">Sin antecedentes previos</button>
+                 <button [disabled]="isReadOnly" (click)="formData.antecedentesServicio = 'con_antecedentes'" [class]="formData.antecedentesServicio === 'con_antecedentes' ? 'bg-amber-500 border-amber-500 text-white shadow-md' : 'bg-slate-50 text-slate-600 border-slate-200'" class="text-center px-5 py-4 rounded-xl border-2 text-sm font-black transition-all disabled:opacity-75 disabled:cursor-not-allowed">Con antecedentes históricos</button>
             </div>
-        </div>
 
-        <div *ngIf="cargandoHistorial" class="text-center py-4">
-            <span class="animate-pulse text-xs font-bold text-slate-400">Consultando base de datos...</span>
-        </div>
-
-        <!-- Listado de Fechas Filtradas -->
-        <div *ngIf="!cargandoHistorial" class="flex flex-wrap gap-3 max-h-48 overflow-y-auto relative z-10">
-            <!-- Cambiamos a getHistorialFiltrado() -->
-            <div *ngFor="let item of getHistorialFiltrado()" 
-                 (click)="seleccionarIntervencionHistorial(item)"
-                 class="bg-indigo-950 hover:bg-indigo-800 border border-indigo-800/80 px-4 py-3 rounded-2xl cursor-pointer transition-all hover:scale-105 active:scale-95 flex items-center gap-3">
-                
-                <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
-                     [class.bg-blue-600]="item.tipo === 1"
-                     [class.bg-purple-600]="item.tipo === 2"
-                     [class.bg-emerald-600]="item.tipo === 3">
-                    {{ item.tipo === 1 ? 'FAM' : (item.tipo === 2 ? 'PSI' : 'MED') }}
-                </div>
-                
+            <div *ngIf="formData.antecedentesServicio === 'con_antecedentes'" class="animate-in slide-in-from-top-2 flex flex-col gap-6">
+                <!-- Resumen Texto -->
                 <div>
-                    <p class="text-xs font-black text-indigo-100">{{ item.fecha }}</p>
-                    <p class="text-[10px] text-slate-400 truncate max-w-[150px]">{{ item.observaciones }}</p>
-                </div>
-            </div>
-
-            <!-- Si no hay coincidencias con la fecha elegida -->
-            <div *ngIf="getHistorialFiltrado().length === 0 && filtroFechaHistorico" class="text-xs text-slate-400 font-bold italic py-2">
-                No se encontraron intervenciones registradas para la fecha seleccionada.
-            </div>
-            
-            <div *ngIf="historialIntervenciones.length === 0 && !filtroFechaHistorico" class="text-xs text-slate-400 font-bold italic py-2">
-                No hay firmas/evoluciones previas registradas para este caso aún.
-            </div>
-        </div>
-    </div>
-    
-    <div class="mb-10">
-      <h3 class="text-xl font-black text-slate-900 mb-2">Evaluación de Riesgo</h3>
-    </div>
-
-    <!-- Cuadrante Antecedentes + Cronología -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-10 mb-12">
-        
-        <!-- Antecedentes (Cargador de PDF) -->
-        <div class="lg:col-span-1 space-y-6">
-            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm h-full flex flex-col">
-                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-4">Antecedentes</label>
-                
-                <div class="grid grid-cols-1 gap-3 mb-4">
-                     <button [disabled]="isReadOnly" (click)="formData.antecedentesServicio = 'sin_antecedentes'" [class]="formData.antecedentesServicio === 'sin_antecedentes' ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-slate-50 text-slate-600 border-slate-200'" class="text-left px-5 py-4 rounded-xl border-2 text-base font-black transition-all">Sin antecedentes previos</button>
-                     <button [disabled]="isReadOnly" (click)="formData.antecedentesServicio = 'con_antecedentes'" [class]="formData.antecedentesServicio === 'con_antecedentes' ? 'bg-amber-500 border-amber-500 text-white' : 'bg-slate-50 text-slate-600 border-slate-200'" class="text-left px-5 py-4 rounded-xl border-2 text-base font-black transition-all">Con antecedentes históricos</button>
+                    <label class="block text-[10px] font-bold text-amber-700 uppercase mb-2">Resumen Clínico / Detalle de lo Adjuntado</label>
+                    <textarea [disabled]="isReadOnly" [(ngModel)]="formData.resumenIntervencionesPrevias" placeholder="Resumen histórico breve o detalle del archivo..." class="w-full p-4 text-sm font-bold bg-amber-50 border-2 border-amber-100 rounded-xl h-32 outline-none text-amber-900 placeholder-amber-400 leading-relaxed shadow-inner disabled:cursor-not-allowed"></textarea>
                 </div>
 
-                <div *ngIf="formData.antecedentesServicio === 'con_antecedentes'" class="animate-in slide-in-from-top-2 flex-1 flex flex-col gap-4">
-                    <div class="flex-1">
-                        <label class="block text-[10px] font-bold text-amber-700 uppercase mb-2">Resumen Clínico</label>
-                        <textarea 
-                                  [disabled]="isReadOnly"
-                                  [(ngModel)]="formData.resumenIntervencionesPrevias" 
-                                  placeholder="Resumen histórico breve o detalle del archivo..."
-                                  class="w-full p-4 text-sm font-bold bg-amber-50 border-2 border-amber-100 rounded-xl h-24 outline-none text-amber-900 placeholder-amber-400 leading-relaxed shadow-inner disabled:cursor-not-allowed"></textarea>
-                        </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-[10px] font-bold text-amber-700 uppercase mb-2">Fecha del Documento</label>
+                        <input type="date" [disabled]="isReadOnly" [(ngModel)]="formData.fechaAntecedente" class="w-full p-4 bg-amber-50 border-2 border-amber-100 rounded-xl text-sm font-bold text-amber-900 focus:bg-white focus:border-amber-400 focus:ring-4 focus:ring-amber-100 outline-none transition-all disabled:cursor-not-allowed">
+                    </div>
 
-                        <!-- NUEVO: FECHA DEL ANTECEDENTE -->
-                        <div>
-                            <label class="block text-[10px] font-bold text-amber-700 uppercase mb-2">Fecha del Documento / Antecedente</label>
-                            <input type="date" 
-                                   [disabled]="isReadOnly"
-                                   [(ngModel)]="formData.fechaAntecedente" 
-                                   class="w-full p-3 bg-amber-50 border-2 border-amber-100 rounded-xl text-sm font-bold text-amber-900 focus:bg-white focus:border-amber-400 focus:ring-4 focus:ring-amber-100 outline-none transition-all disabled:cursor-not-allowed">
-                            <span class="text-[9px] text-amber-600 block mt-1 ml-1">* Ingrese la fecha que figura en el documento físico.</span>
-                        </div>
-                        
+                    <!-- Zona PDF -->
                     <div class="bg-slate-50 p-4 rounded-xl border-2 border-dashed border-slate-200">
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 flex items-center justify-between">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 flex justify-between">
                             Adjuntar Documentación
-                            <span *ngIf="!formData.archivoAntecedentes" class="text-emerald-500 font-bold text-xs flex items-center">
-                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                                Cargado
-                            </span>
+                            <span *ngIf="formData.archivoAntecedentes" class="text-emerald-500 font-bold text-xs flex items-center"><svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg> Cargado</span>
                         </label>
                         <div class="mb-3">
-                            <input type="text" [disabled]="isReadOnly" [(ngModel)]="formData.archivoAntecedentes" placeholder="Nombre/Referencia del archivo (Ej: Historia Clínica 2023)" class="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg outline-none font-bold text-slate-700 placeholder-slate-400">
+                            <input type="text" [disabled]="isReadOnly" [(ngModel)]="formData.descripcionArchivo" placeholder="Referencia (Ej: Informe 2023)" class="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg outline-none focus:border-indigo-500 font-bold text-slate-700 placeholder-slate-400 disabled:bg-slate-100">
                         </div>
                         <input [disabled]="isReadOnly" type="file" #pdfInput hidden accept=".pdf" (change)="onFileSelected($event)">
-                        <button *ngIf="!formData.archivoAntecedentes" (click)="pdfInput.click()" [disabled]="isReadOnly" class="w-full py-2.5 px-4 rounded-lg bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 transition-all text-indigo-600 flex items-center justify-center group font-bold text-sm">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                            Seleccionar PDF
-                        </button>
+                        <button *ngIf="!formData.archivoAntecedentes" (click)="pdfInput.click()" [disabled]="isReadOnly" class="w-full py-2.5 px-4 rounded-lg bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 text-indigo-600 font-bold text-sm disabled:opacity-55 disabled:cursor-not-allowed"><span class="mr-2">📁</span> Seleccionar PDF</button>
+                        
+                        <!-- Tarjeta Cargada -->
                         <div *ngIf="formData.archivoAntecedentes" class="flex items-center justify-between bg-white border border-indigo-200 p-2 rounded-lg shadow-sm">
                             <div class="flex items-center overflow-hidden">
-                                <div class="bg-red-50 p-1.5 rounded text-red-600 mr-2 flex-shrink-0">
-                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H9z" /><path d="M3 8a2 2 0 012-2v10h8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" /></svg>
-                                </div>
-                                <div class="min-w-0">
-                                    <p class="text-xs font-bold text-slate-800 truncate" title="{{formData.archivoAntecedentes}}">{{formData.archivoAntecedentes}}</p>
-                                </div>
+                                <div class="bg-red-50 p-1.5 rounded text-red-600 mr-2 shrink-0"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H9z" /><path d="M3 8a2 2 0 012-2v10h8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" /></svg></div>
+                                <div class="min-w-0"><p class="text-xs font-bold text-slate-800 truncate" title="{{formData.archivoAntecedentes}}">{{formData.archivoAntecedentes}}</p></div>
                             </div>
                             <div class="flex items-center gap-1">
-                                <button (click)="verPdf(formData.archivoAntecedentes)" type="button" class="p-1 text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 rounded" title="Ver PDF">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                                </button>
-                                <button [disabled]="isReadOnly" (click)="removeFile()" class="text-slate-400 hover:text-red-500 p-1" title="Eliminar"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+                                <button (click)="verPdf(formData.archivoAntecedentes)" class="p-1 text-indigo-500 hover:bg-indigo-50 rounded" title="Ver PDF"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg></button>
+                                <button [disabled]="isReadOnly" (click)="removeFile()" class="text-slate-400 hover:text-red-500 p-1 disabled:opacity-55" title="Eliminar"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+    </section>
+
+    <!-- ================================================================ -->
+    <!-- STEP 5: HISTORIAL Y CRONOLOGÍA (Índice 4) -->
+    <!-- ================================================================ -->
+    <section *ngIf="activeStep === 4" class="animate-in fade-in slide-in-from-bottom-6 duration-500">
+        <div class="mb-8">
+            <h2 class="text-2xl font-black text-slate-900 mb-2">Historial Clínico de Entrevistas</h2>
+            <p class="text-slate-500 text-sm">Revise actuaciones pasadas y programe fechas del ciclo actual</p>
+        </div>
+
+        <!-- PANEL DE HISTORIAL (Oscuro) -->
+        <div *ngIf="formData.idPaciente && formData.idPaciente > 0" class="mb-8 bg-slate-900 text-white p-8 rounded-[32px] border border-slate-800 shadow-xl relative overflow-hidden">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 border-b border-slate-700 pb-4">
+                <h3 class="text-sm font-black text-indigo-300 uppercase tracking-widest flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Evoluciones Previas
+                </h3>
+                <div class="flex items-center gap-2">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">Filtrar:</label>
+                    <input type="date" [(ngModel)]="filtroFechaHistorico" class="bg-slate-800 border border-slate-600 rounded-lg px-3 py-1.5 text-xs font-bold text-white outline-none focus:ring-2 ring-indigo-500">
+                    <button *ngIf="filtroFechaHistorico" (click)="filtroFechaHistorico=''" class="text-[10px] text-indigo-400 underline">Limpiar</button>
+                </div>
+            </div>
+
+            <div *ngIf="cargandoHistorial" class="text-center py-4"><span class="animate-pulse text-xs font-bold text-slate-400">Consultando...</span></div>
+
+            <div *ngIf="!cargandoHistorial" class="flex flex-col gap-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+                <div *ngFor="let item of getHistorialFiltrado()" (click)="seleccionarIntervencionHistorial(item)" class="group bg-indigo-950 hover:bg-indigo-800 border border-indigo-900 p-4 rounded-2xl cursor-pointer transition-all flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-[10px] font-black shrink-0" [class.bg-blue-600]="item.tipo === 1" [class.bg-purple-600]="item.tipo === 2" [class.bg-emerald-600]="item.tipo === 3">
+                        {{ item.tipo === 1 ? 'FAM' : (item.tipo === 2 ? 'PSI' : 'MED') }}
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-xs font-black text-indigo-100 mb-1">{{ item.fecha }}</p>
+                        <p class="text-xs text-slate-400 line-clamp-1 group-hover:text-slate-200">{{ item.observaciones }}</p>
+                    </div>
+                    <div class="opacity-0 group-hover:opacity-100"><span class="text-indigo-400 text-xs font-bold">LEER ►</span></div>
+                </div>
+                <div *ngIf="getHistorialFiltrado().length === 0" class="text-center py-6 text-slate-500 text-xs italic">No hay registros para mostrar.</div>
+            </div>
+        </div>
+
+       
+    </section>
+
+    <!-- ================================================================ -->
+    <!-- STEP 6: ATENCIÓN FAMILIAR (Índice 5) -->
+    <!-- ================================================================ -->
+    <section *ngIf="activeStep === 5" class="animate-in fade-in slide-in-from-bottom-6 duration-500">
+        <div class="mb-8">
+            <h2 class="text-2xl font-black text-slate-900 mb-2">Atención Familiar</h2>
+            <p class="text-slate-500 text-sm">Entrevista al referente o tutor</p>
+        </div>
 
         
-          
-    </div>
 
-    <!-- Sección de Redacciones Técnicas (Campos activos para la intervención de hoy) -->
-    <div class="space-y-12">
-        <div class="bg-white p-10 rounded-[40px] border border-slate-200 shadow-sm">
-            <div class="flex items-center space-x-4 mb-8">
-                <div class="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-500 shadow-sm">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" stroke-width="2"/></svg>
-                </div>
-                <h3 class="text-2xl font-black text-slate-800 tracking-tight">Entrevista con Referente Familiar (Hoy)</h3>
-              </div>
-              <textarea [disabled]="isReadOnly" [(ngModel)]="formData.entrevistaReferenteDetalle" class="w-full p-10 border-2 border-slate-100 rounded-[32px] text-lg bg-slate-50 outline-none focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-600 focus:bg-white min-h-[300px] font-bold text-slate-900 leading-relaxed shadow-inner transition-all placeholder-slate-400" placeholder="Escriba aquí la intervención familiar de hoy..."></textarea>
-          </div>
-
-          <div class="bg-white p-10 rounded-[40px] border border-slate-200 shadow-sm">
-              <div class="flex items-center space-x-4 mb-8">
-                  <div class="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-500 shadow-sm">
-                      <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2"/></svg>
-                  </div>
-                  <h3 class="text-2xl font-black text-slate-800 tracking-tight">Atención Psicológica Especializada (Hoy)</h3>
-              </div>
-              <textarea [disabled]="isReadOnly" [(ngModel)]="formData.atencionPsicologicaDetalle" class="w-full p-10 border-2 border-slate-100 rounded-[32px] text-lg bg-slate-50 outline-none focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-600 focus:bg-white min-h-[300px] font-bold text-slate-900 leading-relaxed shadow-inner transition-all placeholder-slate-400" placeholder="Escriba aquí la intervención psicológica de hoy..."></textarea>
-          </div>
-      </div>
-
-      <!-- ============================================================== -->
-      <!-- MODAL EMERGENTE DE SOLO LECTURA (PARA VER EL HISTORIAL)       -->
-      <!-- ============================================================== -->
-      <div *ngIf="showHistoryModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 no-print">
-          <div class="bg-white rounded-[32px] shadow-2xl border border-slate-200 max-w-2xl w-full overflow-hidden animate-in zoom-in-95 duration-300">
-              <!-- Header Modal -->
-              <div class="p-6 text-white flex justify-between items-center"
-                   [class.bg-blue-600]="selectedHistoricIntervention.tipo === 1"
-                   [class.bg-purple-600]="selectedHistoricIntervention.tipo === 2"
-                   [class.bg-emerald-600]="selectedHistoricIntervention.tipo === 3">
-                  <div>
-                      <h4 class="text-lg font-black tracking-tight">
-                          {{ selectedHistoricIntervention.tipo === 1 ? 'Evolución Familiar Guardada' : (selectedHistoricIntervention.tipo === 2 ? 'Evolución Psicología Guardada' : 'Evolución Médica Guardada') }}
-                      </h4>
-                      <p class="text-xs text-white/80 font-bold mt-1">Registrado el día: {{ selectedHistoricIntervention.fecha }}</p>
-                  </div>
-                  <button (click)="cerrarModalHistorico()" class="text-white hover:text-slate-200 text-xl font-bold cursor-pointer">✕</button>
-              </div>
-              
-              <!-- Body Modal -->
-              <div class="p-8 space-y-6">
-                  <div>
-                      <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Técnica / Modalidad utilizada</span>
-                      <p class="text-sm font-bold text-slate-700">
-                          {{ selectedHistoricIntervention.tecnica === 1 ? 'Hora de Juego' : (selectedHistoricIntervention.tecnica === 2 ? 'Entrevista con Adolescente' : 'No específica / Estándar') }}
-                      </p>
-                  </div>
-                  <div>
-                      <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Detalle de lo escrito en esta fecha</span>
-                      <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200 max-h-80 overflow-y-auto shadow-inner">
-                          <p class="text-slate-800 text-sm font-medium leading-relaxed whitespace-pre-line">
-                              {{ selectedHistoricIntervention.observaciones }}
-                          </p>
-                      </div>
-                  </div>
-              </div>
-              
-              <!-- Footer Modal -->
-              <div class="bg-slate-50 p-4 border-t border-slate-100 flex justify-end">
-                  <button (click)="cerrarModalHistorico()" class="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer">
-                      Cerrar Lectura
-                  </button>
-              </div>
-          </div>
-      </div>
-
-      <!-- NUEVO: OBSERVACIONES GENERALES DE INTERVENCIONES -->
-        <div class="bg-white p-10 rounded-[40px] border border-slate-200 shadow-sm mt-8">
-            <div class="flex items-center space-x-4 mb-6">
-                <div class="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-500 shadow-sm">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                </div>
-                <h3 class="text-xl font-black text-slate-800 tracking-tight">Observaciones Generales de las Intervenciones</h3>
-            </div>
-            <textarea 
-                [disabled]="isReadOnly" 
-                [(ngModel)]="formData.observacionesIntervenciones" 
-                class="w-full p-6 border-2 border-slate-100 rounded-2xl bg-slate-50 outline-none focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-600 focus:bg-white min-h-[120px] font-bold text-slate-700 leading-relaxed shadow-inner transition-all placeholder-slate-400 disabled:cursor-not-allowed" 
-                placeholder="Escriba observaciones adicionales sobre las intervenciones de hoy..."></textarea>
+        <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm mb-8">
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Detalle Entrevista con Referente Familiar (Evolución de Hoy)</label>
+            <textarea [disabled]="isReadOnly" [(ngModel)]="formData.entrevistaReferenteDetalle" class="w-full p-6 border-2 border-slate-100 rounded-2xl bg-slate-50 outline-none focus:border-indigo-500 min-h-[250px] font-bold text-slate-700 disabled:cursor-not-allowed" placeholder="Escriba aquí los detalles..."></textarea>
         </div>
-  </section>
 
-    <!-- STEP 4: Clinica -->
-    <!-- STEP 4: Clínica y Estrategia (Paso 5 Visual) -->
-    <section *ngIf="activeStep === 4" class="animate-in fade-in slide-in-from-bottom-6 duration-500">
+        <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Observaciones Generales Adicionales</label>
+            <textarea [disabled]="isReadOnly" [(ngModel)]="formData.observacionesIntervenciones" class="w-full p-6 border-2 border-slate-100 rounded-2xl bg-slate-50 outline-none focus:border-indigo-500 min-h-[100px] font-medium text-slate-700 disabled:cursor-not-allowed" placeholder="Otras observaciones..."></textarea>
+        </div>
+    </section>
 
-           <div class="mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 no-print">
-                <span class="text-xs font-black text-slate-500 uppercase tracking-wider">Profesional Responsable de esta sección:</span>
-                <select [disabled]="isReadOnly" [(ngModel)]="formData.profesionalPaso0" class="p-2.5 bg-white border-2 border-slate-200 rounded-xl font-bold text-xs text-slate-700 outline-none focus:border-indigo-500">
-                    <option [value]="0">-- Seleccionar Profesional --</option>
-                    <!-- Notar el uso de idProfesional, apellido y nombreProf que devuelve tu API -->
-                    <option *ngFor="let p of profesionalesServicio" [value]="p.idProfesional">
-                        {{p.apellido}} {{p.nombreProf}}
-                    </option>
+    <!-- ================================================================ -->
+    <!-- STEP 7: ATENCIÓN PSICOLÓGICA (Índice 6) -->
+    <!-- ================================================================ -->
+    <section *ngIf="activeStep === 6" class="animate-in fade-in slide-in-from-bottom-6 duration-500">
+        <div class="mb-8">
+            <h2 class="text-2xl font-black text-slate-900 mb-2">Atención Psicológica</h2>
+            <p class="text-slate-500 text-sm">Evaluación especializada y técnicas implementadas</p>
+        </div>
+
+        
+
+        <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
+            <div class="mb-6">
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Técnica Utilizada</label>
+                <select [disabled]="isReadOnly" [(ngModel)]="formData.intervenciones.horaJuego" class="w-full md:w-1/2 p-3 bg-slate-50 border-2 border-slate-200 rounded-xl font-bold text-slate-700 outline-none focus:border-indigo-500">
+                    <option [value]="null">No Especifica / Estándar</option>
+                    <option [value]="'niña'">Hora de Juego</option>
+                    <option [value]="'adolescente'">Entrevista Adolescente</option>
                 </select>
             </div>
 
-        <div class="mb-10">
-            <h2 class="text-2xl font-black text-slate-900 mb-2">Atención Médica y Estrategia</h2>
-            <p class="text-slate-500 text-sm">Hallazgos clínicos, pruebas realizadas y plan de seguimiento</p>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Evolución Psicológica (Hoy)</label>
+            <textarea [disabled]="isReadOnly" [(ngModel)]="formData.atencionPsicologicaDetalle" class="w-full p-6 border-2 border-slate-100 rounded-2xl bg-slate-50 outline-none focus:border-indigo-500 min-h-[300px] font-bold text-slate-700 disabled:cursor-not-allowed" placeholder="Escriba aquí los detalles..."></textarea>
+        </div>
+    </section>
+
+    <!-- ================================================================ -->
+    <!-- STEP 8: ATENCIÓN MÉDICA (Índice 7) -->
+    <!-- ================================================================ -->
+    <section *ngIf="activeStep === 7" class="animate-in fade-in slide-in-from-bottom-6 duration-500">
+        <div class="mb-8">
+            <h2 class="text-2xl font-black text-slate-900 mb-2">Atención Médica</h2>
+            <p class="text-slate-500 text-sm">Protocolos clínicos, exámenes y tratamiento</p>
         </div>
 
-        <!-- 1. ATENCIÓN MÉDICA -->
-        <div class="bg-white p-8 rounded-[32px] border border-slate-200 shadow-sm mb-10 relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-2 h-full bg-emerald-500"></div>
-            <h3 class="text-lg font-black text-emerald-800 uppercase tracking-widest mb-8 flex items-center">
-                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
-                Atención Médica
-            </h3>
+      
 
-            <!-- Examen Físico -->
-            <div class="mb-8 p-6 bg-slate-50 rounded-2xl">
-                <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Paciente Examinado/a</label>
-                <div class="flex flex-wrap gap-4 mb-6">
-                    <button *ngFor="let v of ['niña', 'niño', 'adolescente']" 
-                            (click)="formData.atencionMedicaExamen = $any(v)"
-                            [class]="formData.atencionMedicaExamen === v ? 'bg-emerald-600 border-emerald-600 text-white shadow-md' : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'"
-                            [disabled]="isReadOnly"
-                            class="px-6 py-3 rounded-xl border-2 text-sm font-black uppercase transition-all">
-                        {{v}}
-                    </button>
-                </div>
-
-                <div class="flex flex-col md:flex-row gap-6">
-                    <label class="flex items-center p-4 bg-white border-2 border-slate-200 rounded-xl cursor-pointer hover:border-emerald-400 transition-all flex-1">
-                        <input type="checkbox" [(ngModel)]="formData.genitalNormal" [disabled]="isReadOnly" class="w-6 h-6 mr-3 rounded text-emerald-600 border-slate-300 focus:ring-emerald-500">
-                        <span class="font-bold text-slate-700">Genitales dentro de parámetros normales</span>
-                    </label>
-                    <input [(ngModel)]="formData.atencionMedicaOtro" placeholder="Otro hallazgo..." [disabled]="isReadOnly" class="flex-1 px-4 py-3 bg-white border-2 border-slate-200 rounded-xl font-bold text-slate-800 outline-none focus:border-emerald-500">
+        <!-- MANTENEMOS TODO EL HTML PREVIO DE EXAMEN FISICO Y FORENSE AQUÍ -->
+        <!-- Pegar el bloque de Forense, Paciente explorado (Niña, Niño), Laboratorios y el Input de PDF Archivo Atención Médica -->
+        <div class="bg-white p-8 rounded-[32px] border border-slate-200 shadow-sm mb-8">
+            <!-- Bloque de Médico Forense Interactivo (El que implementamos ayer) -->
+            <div class="mb-8 p-6 bg-slate-50 rounded-2xl border border-slate-200">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div class="flex-1">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">¿Interviene Médico Forense?</label>
+                        <div class="flex bg-white rounded-xl p-1 border border-slate-200 shadow-sm w-fit">
+                            <button type="button" [disabled]="isReadOnly" (click)="formData.intervenciones.conForense = false" [class.bg-slate-200]="!formData.intervenciones.conForense" class="px-6 py-2 rounded-lg text-xs font-bold transition-all text-slate-800 cursor-pointer">NO</button>
+                            <button type="button" [disabled]="isReadOnly" (click)="formData.intervenciones.conForense = true" [class.bg-indigo-600]="formData.intervenciones.conForense" [class.text-white]="formData.intervenciones.conForense" class="px-6 py-2 rounded-lg text-xs font-bold transition-all text-slate-400 cursor-pointer">SI</button>
+                        </div>
+                    </div>
+                    <div *ngIf="formData.intervenciones.conForense" class="flex-1 animate-in slide-in-from-left-2">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Nombre del Médico Forense</label>
+                        <input type="text" [disabled]="isReadOnly" [(ngModel)]="formData.medicoForense" placeholder="Ej: Dr. Pérez Juan" class="w-full px-4 py-3 bg-white border-2 border-indigo-200 rounded-xl font-bold text-slate-800 outline-none">
+                    </div>
                 </div>
             </div>
 
-            <!-- Fotografía -->
-            <div class="mb-8">
-                <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Registro Fotográfico</label>
+            <!-- Examen Físico -->
+            <h3 class="text-lg font-black text-slate-800 mb-6 border-b border-slate-50 pb-2">Protocolo de Examen Físico</h3>
+            <div class="flex flex-col md:flex-row md:items-center gap-12 mb-8">
+                <div class="flex-1">
+                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3">Paciente explorado:</p>
+                    <div class="flex gap-3">
+                        <button *ngFor="let opt of pacienteOptions" [disabled]="isReadOnly" (click)="formData.atencionMedicaExamen = opt.val" [class]="formData.atencionMedicaExamen === opt.val ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-50 text-slate-500 border-slate-200'" class="flex-1 py-3 rounded-xl border-2 text-sm font-black transition-all">{{opt.label}}</button>
+                    </div>
+                </div>
+                <div class="flex-1 flex items-center mt-6 md:mt-0">
+                     <label class="flex items-center p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl cursor-pointer hover:border-indigo-400 w-full transition-all">
+                        <input type="checkbox" [disabled]="isReadOnly" [(ngModel)]="formData.genitalNormal" class="w-6 h-6 mr-4 rounded text-indigo-600 focus:ring-indigo-500">
+                        <span class="font-bold text-slate-700">Genital dentro de parámetros normales</span>
+                    </label>
+                </div>
+            </div>
+
+            
+            <!--  REGISTRO FOTOGRÁFICO -->
+           
+            <div class="mb-8 border-t border-slate-100 pt-8">
+                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-4">Registro Fotográfico</label>
+                
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <label *ngFor="let opt of ['Consentimiento del familiar', 'Asentimiento del familiar', 'Consentimiento del NNyA', 'Asentimiento del NNyA']" 
-                           class="flex items-center space-x-3 cursor-pointer p-3 hover:bg-slate-50 rounded-lg">
-                        <input type="checkbox" [disabled]="isReadOnly"
-                               [checked]="formData.fotografiaConsentimiento.includes(opt)" 
-                               (change)="handleCheckboxList('fotografiaConsentimiento', opt)"
-                               class="w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
-                        <span class="font-medium text-slate-700">{{opt}}</span>
+                    <!-- Opción 1 -->
+                    <label class="flex items-center p-4 bg-slate-50 border-2 border-transparent rounded-2xl cursor-pointer hover:border-indigo-200 transition-all">
+                        <input type="checkbox" 
+                               [disabled]="isReadOnly"
+                               [checked]="formData.fotografiaConsentimiento.includes('Consentimiento del familiar')"
+                               (change)="handleCheckboxList('fotografiaConsentimiento', 'Consentimiento del familiar')"
+                               class="w-6 h-6 mr-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500">
+                        <span class="font-bold text-slate-700 text-sm">Consentimiento del familiar</span>
+                    </label>
+                    
+                    <!-- Opción 2 -->
+                    <label class="flex items-center p-4 bg-slate-50 border-2 border-transparent rounded-2xl cursor-pointer hover:border-indigo-200 transition-all">
+                        <input type="checkbox" 
+                               [disabled]="isReadOnly"
+                               [checked]="formData.fotografiaConsentimiento.includes('Asentimiento del familiar')"
+                               (change)="handleCheckboxList('fotografiaConsentimiento', 'Asentimiento del familiar')"
+                               class="w-6 h-6 mr-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500">
+                        <span class="font-bold text-slate-700 text-sm">Asentimiento del familiar</span>
+                    </label>
+
+                    <!-- Opción 3 -->
+                    <label class="flex items-center p-4 bg-slate-50 border-2 border-transparent rounded-2xl cursor-pointer hover:border-indigo-200 transition-all">
+                        <input type="checkbox" 
+                               [disabled]="isReadOnly"
+                               [checked]="formData.fotografiaConsentimiento.includes('Consentimiento del NNyA')"
+                               (change)="handleCheckboxList('fotografiaConsentimiento', 'Consentimiento del NNyA')"
+                               class="w-6 h-6 mr-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500">
+                        <span class="font-bold text-slate-700 text-sm">Consentimiento del NNyA</span>
+                    </label>
+
+                    <!-- Opción 4 -->
+                    <label class="flex items-center p-4 bg-slate-50 border-2 border-transparent rounded-2xl cursor-pointer hover:border-indigo-200 transition-all">
+                        <input type="checkbox" 
+                               [disabled]="isReadOnly"
+                               [checked]="formData.fotografiaConsentimiento.includes('Asentimiento del NNyA')"
+                               (change)="handleCheckboxList('fotografiaConsentimiento', 'Asentimiento del NNyA')"
+                               class="w-6 h-6 mr-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500">
+                        <span class="font-bold text-slate-700 text-sm">Asentimiento del NNyA</span>
                     </label>
                 </div>
             </div>
 
             <!-- Laboratorios -->
-            <div class="mb-8 border-t border-slate-100 pt-6">
-                <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Estado de Laboratorio</label>
-                <div class="flex gap-4 mb-4">
-                    <button (click)="formData.laboratorioEstado = 'solicitado'" [class]="formData.laboratorioEstado === 'solicitado' ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-white text-slate-400 border-slate-200'" [disabled]="isReadOnly" class="px-4 py-2 rounded-lg border-2 font-bold text-sm">Solicitado</button>
-                    <button (click)="formData.laboratorioEstado = 'espera'" [class]="formData.laboratorioEstado === 'espera' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-white text-slate-400 border-slate-200'" [disabled]="isReadOnly" class="px-4 py-2 rounded-lg border-2 font-bold text-sm">En espera</button>
-                    <button (click)="formData.laboratorioEstado = 'recibido'" [class]="formData.laboratorioEstado === 'recibido' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-white text-slate-400 border-slate-200'" [disabled]="isReadOnly" class="px-4 py-2 rounded-lg border-2 font-bold text-sm">Recibido</button>
-                </div>
-                
-                <div *ngIf="formData.laboratorioEstado === 'recibido'" class="animate-in slide-in-from-top-2">
-                    <textarea [(ngModel)]="formData.hallazgosLaboratorio" placeholder="Se evidencia (infección urinaria, ETS)..." class="w-full p-4 border-2 border-emerald-100 rounded-xl bg-emerald-50/30 text-emerald-900 font-medium placeholder-emerald-400 focus:ring-2 focus:ring-emerald-500 outline-none"></textarea>
-                </div>
-            </div>
-
-            <!-- Tratamiento -->
-           <!-- Tratamiento (Input que ya tenías) -->
-            <!-- NUEVO: SECCIÓN MÉDICO FORENSE INTERACTIVO -->
-          <div class="mb-8 p-6 bg-slate-50 rounded-2xl border border-slate-200">
-              <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                  
-                  <!-- Selector SI/NO (IntervieneForense) -->
-                  <div class="flex-1">
-                      <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">¿Interviene Médico Forense?</label>
-                      <div class="flex bg-white rounded-xl p-1 border border-slate-200 max-w-xs shadow-sm">
-                          <button type="button" 
-                                  [disabled]="isReadOnly" 
-                                  (click)="formData.intervenciones.conForense = false"
-                                  [class.bg-slate-200]="!formData.intervenciones.conForense"
-                                  [class.text-slate-800]="!formData.intervenciones.conForense"
-                                  class="flex-1 py-2 rounded-lg text-xs font-bold transition-all text-slate-400 cursor-pointer">
-                              NO
-                          </button>
-                          <button type="button" 
-                                  [disabled]="isReadOnly" 
-                                  (click)="formData.intervenciones.conForense = true"
-                                  [class.bg-indigo-600]="formData.intervenciones.conForense"
-                                  [class.text-white]="formData.intervenciones.conForense"
-                                  class="flex-1 py-2 rounded-lg text-xs font-bold transition-all text-slate-400 cursor-pointer">
-                              SI
-                          </button>
-                      </div>
-                  </div>
-
-                  <!-- Campo de Texto Condicional (Aparece si selecciona SI) -->
-                  <div *ngIf="formData.intervenciones.conForense" class="flex-1 animate-in slide-in-from-left-2">
-                      <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Nombre y Apellido del Médico Forense</label>
-                      <input type="text" 
-                             [disabled]="isReadOnly" 
-                             [(ngModel)]="formData.medicoForense"
-                             placeholder="Ej: Dr. Pérez Juan"
-                             class="w-full px-4 py-3 bg-white border-2 border-indigo-200 rounded-xl font-bold text-slate-800 outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/10 transition-all placeholder-indigo-300">
-                  </div>
-              </div>
-          </div>
-
-            <div>
-                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Indicación de Tratamiento Médico</label>
-                 <input [(ngModel)]="formData.tratamientoIndicado" [disabled]="isReadOnly" class="w-full px-5 py-4 border-2 border-slate-200 rounded-xl font-bold text-lg text-slate-800 outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all mb-6">
-            </div>
-
-            <!-- NUEVO: Zona de Adjunto para Clínica -->
-            <div class="bg-slate-50 p-4 rounded-xl border-2 border-dashed border-slate-200">
-                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 flex items-center justify-between">
-                    Documentación Médica Anexa
-                    <span *ngIf="formData.archivoAtencionMedica" class="text-emerald-500 font-bold text-xs flex items-center animate-in fade-in">
-                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                        Cargado
-                    </span>
-                </label>
-
-                <!-- Input de Descripción -->
-                <div class="mb-3">
-                    <input type="text" 
-                           [(ngModel)]="formData.descripcionAtencionMedica"
-                           placeholder="Referencia (Ej: Estudios Complementarios / Receta Escaneada)" 
-                           [disabled]="isReadOnly"
-                           class="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg outline-none focus:border-emerald-500 font-bold text-slate-700 placeholder-slate-400 transition-all">
-                </div>
-                
-                <!-- Input File Oculto (Nuevas referencias) -->
-                <input type="file" #pdfMedicalInput hidden accept=".pdf" (change)="onMedicalFileSelected($event)">
-                
-                <!-- Botón Subir (Si no hay archivo) -->
-                <button *ngIf="!formData.archivoAtencionMedica" 
-                        (click)="pdfMedicalInput.click()" 
-                        [disabled]="isReadOnly"
-                        class="w-full py-2.5 px-4 rounded-lg bg-emerald-50 border border-emerald-100 hover:bg-emerald-100 transition-all text-emerald-700 flex items-center justify-center group font-bold text-sm">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                    Adjuntar Informe/Estudio (PDF)
-                </button>
-
-                <!-- Tarjeta Archivo Cargado -->
-               <!-- Tarjeta Archivo Cargado (Paso 5) -->
-                <div *ngIf="formData.archivoAtencionMedica" class="flex items-center justify-between bg-white border border-emerald-200 p-2 rounded-lg shadow-sm animate-in slide-in-from-bottom-2">
-                    <div class="flex items-center overflow-hidden">
-                        <div class="bg-red-50 p-1.5 rounded text-red-600 mr-2 flex-shrink-0">
-                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H9z" /><path d="M3 8a2 2 0 012-2v10h8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" /></svg>
-                        </div>
-                        <div class="min-w-0">
-                            <p class="text-xs font-bold text-slate-800 truncate" title="{{formData.archivoAtencionMedica}}">
-                                {{formData.archivoAtencionMedica}}
-                            </p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-1 shrink-0">
-                        <!-- NUEVO BOTÓN: VER PDF -->
-                        <button (click)="verPdf(formData.archivoAtencionMedica)" type="button" class="p-1.5 hover:bg-emerald-50 text-emerald-600 rounded-lg transition-all" title="Ver PDF">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                        </button>
-                        <!-- Botón Eliminar existente -->
-                        <button (click)="removeMedicalFile()" class="text-slate-400 hover:text-red-500 transition-colors p-1.5" title="Eliminar archivo">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <!-- NUEVO: OBSERVACIONES DE LA ESTRATEGIA -->
-        <div class="bg-white p-8 rounded-[32px] border border-slate-200 shadow-sm mt-8">
-            <div class="flex items-center gap-3 mb-6">
-                <div class="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-500 shadow-sm">
-                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                </div>
-                <h3 class="text-lg font-black text-indigo-900 uppercase tracking-widest">Observaciones Medicas Generales</h3>
-            </div>
-            <textarea 
-                [disabled]="isReadOnly" 
-                [(ngModel)]="formData.observacionesEstrategia" 
-                class="w-full p-6 border-2 border-slate-100 rounded-2xl bg-slate-50 outline-none focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-600 focus:bg-white min-h-[120px] font-bold text-slate-700 leading-relaxed shadow-inner transition-all placeholder-slate-400 disabled:cursor-not-allowed" 
-                placeholder="Detalle observaciones adicionales sobre el plan de seguimiento, turnos o vacunas indicadas..."></textarea>
-        </div>
-        </div>
-
-        <!-- 2. ARTICULACIÓN -->
-        <div class="bg-indigo-50 p-8 rounded-[32px] border border-indigo-100 shadow-sm mb-10">
-            <h3 class="text-lg font-black text-indigo-900 uppercase tracking-widest mb-6">Articulaciones Inter e Intrainstitucional</h3>
-            
-            <div class="grid grid-cols-1 gap-6">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-indigo-100/50">
-                    <label class="block text-xs font-bold text-indigo-400 uppercase tracking-widest mb-2">Coordinación con Servicios de Protección de NN y A</label>
-                    <input [(ngModel)]="formData.coordinacionProteccion" [disabled]="isReadOnly" placeholder="Roles, responsables, finalidad..." class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-medium focus:bg-white focus:border-indigo-500 outline-none">
-                </div>
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-indigo-100/50">
-                    <label class="block text-xs font-bold text-indigo-400 uppercase tracking-widest mb-2">Diálogo Interdisciplinario (Equipo)</label>
-                    <input [(ngModel)]="formData.dialogoInterdisciplinario" [disabled]="isReadOnly" placeholder="¿Con qué profesional se articuló?" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-medium focus:bg-white focus:border-indigo-500 outline-none">
-                </div>
-            </div>
-        </div>
-
-        <!-- 3. ESTRATEGIA TERAPÉUTICA -->
-        <div class="bg-white p-8 rounded-[32px] border border-slate-200 shadow-sm mb-10">
-            <h3 class="text-lg font-black text-indigo-800 uppercase tracking-widest mb-8 border-b border-slate-100 pb-4">
-                Estrategia Terapéutica y Seguimiento
-            </h3>
-
-            <!-- Turnos -->
-            <div class="mb-10 bg-indigo-50/50 p-6 rounded-2xl border border-indigo-100">
-                <label class="block text-sm font-black text-indigo-900 mb-4 flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
-                    Se otorga turno con:
-                </label>
-                <!-- Programación de Próximo Turno en Paso 5 -->
-            <div class="bg-white p-10 rounded-[32px] shadow-sm border-2 border-indigo-100">
-                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-5">Programación de Próximo Turno</label>
-                
-                <!-- Cambiado de formData.estrategiaTurnoCon a formData.idProfesionalTurno -->
-                <select [disabled]="isReadOnly" [(ngModel)]="formData.idProfesionalTurno" class="w-full p-5 border-2 border-slate-100 rounded-2xl bg-slate-50 text-base font-black text-slate-800 outline-none focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-600 transition-all mb-6 shadow-sm">
-                    <option [value]="0">-- Seleccionar Profesional --</option>
-                    <option *ngFor="let p of profesionalesServicio" [value]="p.idProfesional">
-                        {{p.apellido}} {{p.nombreProf}}
-                    </option>
-                </select>
-                
-                <input [disabled]="isReadOnly" type="date" [(ngModel)]="formData.estrategiaFechaTurno" class="w-full px-6 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-lg font-black text-indigo-700 outline-none">
-            </div>
-            </div>
-
-            <!-- Checkbox List de Recomendaciones -->
-            <div class="space-y-4">
-                <!-- Terapia Familiar -->
-                <label class="flex items-center p-4 rounded-xl border-2 border-transparent hover:border-slate-200 hover:bg-slate-50 transition-all cursor-pointer">
-                    <input type="checkbox" [(ngModel)]="formData.recomiendaTerapiaReferente" [disabled]="isReadOnly" class="w-6 h-6 mr-4 rounded text-indigo-600 border-slate-300">
-                    <span class="font-bold text-slate-700">Se recomienda al referente familiar realizar terapia psicológica</span>
-                </label>
-                
-                <!-- Derivación (Con input) -->
-                <div class="p-4 rounded-xl border-2 border-transparent hover:border-slate-200 hover:bg-slate-50 transition-all">
-                     <div class="flex items-center mb-2">
-                        <div class="w-6 h-6 mr-4 flex items-center justify-center text-indigo-600 font-bold">→</div>
-                        <span class="font-bold text-slate-700">Se deriva a:</span>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 border-t border-slate-100 pt-8">
+                 <div>
+                     <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3">Laboratorios</label>
+                     <div class="flex gap-2">
+                        <button [disabled]="isReadOnly" (click)="formData.laboratorioEstado = 'solicitado'" [class]="formData.laboratorioEstado === 'solicitado' ? 'bg-indigo-600 text-white' : 'bg-slate-50 border-slate-200'" class="px-4 py-2 rounded-lg border text-xs font-bold transition-all">Solicitado</button>
+                        <button [disabled]="isReadOnly" (click)="formData.laboratorioEstado = 'espera'" [class]="formData.laboratorioEstado === 'espera' ? 'bg-amber-500 text-white' : 'bg-slate-50 border-slate-200'" class="px-4 py-2 rounded-lg border text-xs font-bold transition-all">Espera</button>
+                        <button [disabled]="isReadOnly" (click)="formData.laboratorioEstado = 'recibido'" [class]="formData.laboratorioEstado === 'recibido' ? 'bg-emerald-600 text-white' : 'bg-slate-50 border-slate-200'" class="px-4 py-2 rounded-lg border text-xs font-bold transition-all">Recibido</button>
                      </div>
-                     <input [(ngModel)]="formData.derivacionA" [disabled]="isReadOnly" placeholder="Especifique institución o servicio..." class="w-full ml-10 px-4 py-2 border border-slate-200 rounded-lg text-sm focus:border-indigo-500 outline-none max-w-md">
-                </div>
-
-                <!-- Espacio Grupal -->
-                <label class="flex items-start p-4 rounded-xl border-2 border-transparent hover:border-slate-200 hover:bg-slate-50 transition-all cursor-pointer">
-                    <input type="checkbox" [(ngModel)]="formData.espacioGrupal" [disabled]="isReadOnly" class="w-6 h-6 mr-4 mt-1 rounded text-indigo-600 border-slate-300 shrink-0">
-                    <div>
-                        <span class="font-bold text-slate-700 block">Participación de espacio grupal SAINNAVV</span>
-                        <span class="text-xs text-slate-500 font-medium">Contención para elaborar situaciones vividas.</span>
-                    </div>
-                </label>
-
-                <!-- Cámara Gesell -->
-                <label class="flex items-start p-4 rounded-xl border-2 border-transparent hover:border-slate-200 hover:bg-slate-50 transition-all cursor-pointer">
-                    <input type="checkbox" [(ngModel)]="formData.acompanamientoGesell" [disabled]="isReadOnly" class="w-6 h-6 mr-4 mt-1 rounded text-indigo-600 border-slate-300 shrink-0">
-                    <span class="font-bold text-slate-700">Acompañamiento en declaración de Cámara Gesell</span>
-                </label>
-
-                <!-- Medidas de Impedimento -->
-                <div class="bg-rose-50 p-6 rounded-2xl border border-rose-100 mt-6">
-                    <label class="block text-xs font-black text-rose-800 uppercase tracking-widest mb-3">Medidas de Protección (Impedimento de Contacto)</label>
-                    <p class="text-xs text-rose-600 mb-2">Se sugirió establecer medidas con el Sr./Sra. hasta esclarecimiento judicial.</p>
-                    <input [(ngModel)]="formData.medidasImpedimento" [disabled]="isReadOnly" placeholder="Nombre de la persona restringida..." class="w-full px-4 py-3 border-2 border-rose-200 bg-white rounded-xl text-rose-900 font-bold placeholder-rose-300 outline-none focus:ring-4 focus:ring-rose-500/10">
-                </div>
+                 </div>
+                 <div *ngIf="formData.laboratorioEstado === 'recibido'" class="animate-in slide-in-from-top-2">
+                     <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3">Hallazgos de Laboratorio</label>
+                     <input [disabled]="isReadOnly" [(ngModel)]="formData.hallazgosLaboratorio" placeholder="Ej: Infección urinaria..." class="w-full px-4 py-3 bg-white border-2 border-emerald-200 rounded-xl font-bold outline-none focus:border-emerald-500">
+                 </div>
             </div>
+
+            <!-- Tratamiento y Observación -->
+            <div class="mb-8">
+                 <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3">Tratamiento Indicado</label>
+                 <textarea [disabled]="isReadOnly" [(ngModel)]="formData.tratamientoIndicado" class="w-full p-4 border-2 border-slate-200 bg-slate-50 rounded-xl font-bold h-24 outline-none focus:border-indigo-500"></textarea>
+            </div>
+            <div>
+                 <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3">Evolución Clínica (Hoy)</label>
+                 <textarea [disabled]="isReadOnly" [(ngModel)]="formData.observacionesSituacion" class="w-full p-6 border-2 border-slate-200 bg-slate-50 rounded-2xl font-bold h-32 outline-none focus:border-indigo-500"></textarea>
+            </div>
+        </div>
+
+        <!-- Archivo Adjunto Clínico (Reutilizamos la lógica del paso anterior) -->
+        <div class="bg-slate-50 p-6 rounded-2xl border-2 border-dashed border-slate-200">
+             <label class="block text-[11px] font-bold text-slate-500 uppercase mb-4">Adjuntar Documentación Médica</label>
+             <input [disabled]="isReadOnly" type="text" [(ngModel)]="formData.descripcionAtencionMedica" placeholder="Referencia del estudio..." class="w-full px-4 py-2.5 mb-3 rounded-lg border font-bold text-sm outline-none focus:border-indigo-500 disabled:bg-slate-100">
+             
+             <input type="file" #pdfMed hidden accept=".pdf" (change)="onMedicalFileSelected($event)" [disabled]="isReadOnly">
+             <button *ngIf="!formData.archivoAtencionMedica" [disabled]="isReadOnly" (click)="pdfMed.click()" class="w-full py-3 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-bold rounded-lg transition-all text-sm flex items-center justify-center disabled:opacity-50">Seleccionar Archivo Clínico</button>
+             
+             <div *ngIf="formData.archivoAtencionMedica" class="flex justify-between items-center bg-white p-3 rounded-lg border shadow-sm mt-2">
+                  <span class="text-xs font-bold text-slate-700 truncate max-w-xs">{{formData.archivoAtencionMedica}}</span>
+                  <div class="flex gap-2">
+                       <button (click)="verPdf(formData.archivoAtencionMedica)" class="p-1.5 bg-indigo-50 text-indigo-600 rounded hover:bg-indigo-100">Ver</button>
+                       <button [disabled]="isReadOnly" (click)="removeMedicalFile()" class="p-1.5 text-red-500 hover:bg-red-50 rounded disabled:opacity-50">✕</button>
+                  </div>
+             </div>
+        </div>
+    </section>
+
+    <!-- ================================================================ -->
+    <!-- STEP 9: ESTRATEGIA TERAPÉUTICA (Índice 8) -->
+    <!-- ================================================================ -->
+    <section *ngIf="activeStep === 8" class="animate-in fade-in slide-in-from-bottom-6 duration-500">
+        <div class="mb-8">
+            <h2 class="text-2xl font-black text-slate-900 mb-2">Estrategia Terapéutica</h2>
+            <p class="text-slate-500 text-sm">Lineamientos a seguir, próximos turnos y derivaciones</p>
         </div>
 
         
+
+        <div class="bg-indigo-50 p-8 rounded-[40px] border border-indigo-100 shadow-sm relative overflow-hidden mb-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 relative z-10">
+                
+                <!-- Turno de Seguimiento -->
+                <div class="bg-white p-8 rounded-3xl shadow-sm border border-indigo-200">
+                    <label class="block text-[11px] font-bold text-indigo-900 uppercase tracking-widest mb-6">Programación de Próximo Turno</label>
+                    <select [disabled]="isReadOnly" [(ngModel)]="formData.idProfesionalTurno" class="w-full p-4 border-2 border-slate-100 rounded-xl bg-slate-50 font-bold text-slate-700 outline-none focus:border-indigo-500 mb-4">
+                        <option [value]="0">-- Profesional Asignado --</option>
+                        <option *ngFor="let p of profesionalesServicio" [value]="p.idProfesional">{{p.apellido}} {{p.nombreProf}}</option>
+                    </select>
+                    <input [disabled]="isReadOnly" type="date" [(ngModel)]="formData.estrategiaFechaTurno" class="w-full p-4 border-2 border-slate-100 rounded-xl bg-slate-50 font-bold text-indigo-700 outline-none focus:border-indigo-500">
+                </div>
+                
+                <!-- Opciones Terapéuticas -->
+                <div class="bg-white p-8 rounded-3xl shadow-sm border border-indigo-200 flex flex-col gap-4 justify-center">
+                    <label class="flex items-center cursor-pointer p-3 hover:bg-slate-50 rounded-xl border border-transparent transition-colors">
+                        <input type="checkbox" [disabled]="isReadOnly" [(ngModel)]="formData.recomiendaTerapiaReferente" class="w-6 h-6 mr-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300">
+                        <span class="text-sm font-bold text-slate-700">Se recomienda al referente familiar realizar terapia psicológica</span>
+                    </label>
+                    <label class="flex items-center cursor-pointer p-3 hover:bg-slate-50 rounded-xl border border-transparent transition-colors">
+                        <input type="checkbox" [disabled]="isReadOnly" [(ngModel)]="formData.espacioGrupal" class="w-6 h-6 mr-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300">
+                        <span class="text-sm font-bold text-slate-700">Participación de espacio grupal SAINNAVV</span>
+                    </label>
+                    <label class="flex items-center cursor-pointer p-3 hover:bg-slate-50 rounded-xl border border-transparent transition-colors">
+                        <input type="checkbox" [disabled]="isReadOnly" [(ngModel)]="formData.acompanamientoGesell" class="w-6 h-6 mr-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300">
+                        <span class="text-sm font-bold text-slate-700">Acompañamiento Cámara Gesell</span>
+                    </label>
+                    
+                    <div class="flex items-center gap-3 mt-2 px-3">
+                         <span class="text-xs font-bold text-slate-500 uppercase whitespace-nowrap">Derivar a:</span>
+                         <input type="text" [disabled]="isReadOnly" [(ngModel)]="formData.derivacionA" placeholder="Especifique..." class="flex-1 p-2 border-b-2 border-slate-200 outline-none focus:border-indigo-500 font-bold text-sm bg-transparent">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Medidas Impedimento -->
+            <div class="mt-8 bg-white p-6 rounded-3xl shadow-sm border border-rose-200 relative z-10">
+                <label class="block text-[11px] font-bold text-rose-800 uppercase tracking-widest mb-3">Medidas de Restricción / Impedimento</label>
+                <input [disabled]="isReadOnly" [(ngModel)]="formData.medidasImpedimento" placeholder="Especifique persona si aplica, sino deje en blanco..." class="w-full p-4 border-2 border-rose-100 bg-rose-50/50 rounded-xl font-bold text-rose-900 outline-none focus:border-rose-400">
+            </div>
+        </div>
+
+        <div class="bg-white p-8 rounded-[32px] border border-slate-200 shadow-sm">
+             <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Observaciones de la Estrategia</label>
+             <textarea [disabled]="isReadOnly" [(ngModel)]="formData.observacionesEstrategia" placeholder="Detalle observaciones adicionales sobre turnos o pautas..." class="w-full p-6 border-2 border-slate-100 rounded-2xl bg-slate-50 h-32 outline-none font-medium focus:border-indigo-500 disabled:cursor-not-allowed"></textarea>
+        </div>
     </section>
 
-    <!-- STEP 5: Final -->
-   <!-- STEP 5: Conclusión (Paso 6 Visual) -->
-    <section *ngIf="activeStep === 5" class="animate-in fade-in slide-in-from-bottom-6 duration-500">
-
-       <div class="mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 no-print">
-            <span class="text-xs font-black text-slate-500 uppercase tracking-wider">Profesional Responsable de esta sección:</span>
-            <select [disabled]="isReadOnly" [(ngModel)]="formData.profesionalPaso0" class="p-2.5 bg-white border-2 border-slate-200 rounded-xl font-bold text-xs text-slate-700 outline-none focus:border-indigo-500">
-                <option [value]="0">-- Seleccionar Profesional --</option>
-                <!-- Notar el uso de idProfesional, apellido y nombreProf que devuelve tu API -->
-                <option *ngFor="let p of profesionalesServicio" [value]="p.idProfesional">
-                    {{p.apellido}} {{p.nombreProf}}
-                </option>
-            </select>
+    <!-- ================================================================ -->
+    <!-- STEP 10: ARTICULACIÓN (Índice 9) -->
+    <!-- ================================================================ -->
+    <section *ngIf="activeStep === 9" class="animate-in fade-in slide-in-from-bottom-6 duration-500">
+        <div class="mb-8">
+            <h2 class="text-2xl font-black text-slate-900 mb-2">Articulación Interinstitucional</h2>
         </div>
+
+        
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
+                <label class="block text-xs font-black text-slate-600 uppercase mb-4">Coordinación Protección (S.E.N.A.F. u otros)</label>
+                <textarea [disabled]="isReadOnly" [(ngModel)]="formData.coordinacionProteccion" class="w-full h-32 p-4 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:border-indigo-500 font-bold" placeholder="Detalle coordinación..."></textarea>
+            </div>
+            <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
+                <label class="block text-xs font-black text-slate-600 uppercase mb-4">Diálogo Interdisciplinario (Profesionales externos)</label>
+                <textarea [disabled]="isReadOnly" [(ngModel)]="formData.dialogoInterdisciplinario" class="w-full h-32 p-4 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:border-indigo-500 font-bold" placeholder="Detalle diálogo con instituciones..."></textarea>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================================================================ -->
+    <!-- STEP 11: CONCLUSIÓN (Índice 10) -->
+    <!-- ================================================================ -->
+    <!-- (La sección final queda exactamente igual, pero cambia el *ngIf a 10) -->
+    <section *ngIf="activeStep === 10" class="animate-in fade-in slide-in-from-bottom-6 duration-500">
+        <!-- Usa TODO TU CÓDIGO ORIGINAL de Conclusión a partir de aquí, solo asegúrate de poner el Dropdown de Profesional al principio -->
+        
+        
         <div class="mb-10">
             <h2 class="text-2xl font-black text-slate-900 mb-2">Conclusiones Finales</h2>
             <p class="text-slate-500 text-sm">Dictamen profesional y elevación de informe</p>
@@ -1404,60 +1338,93 @@
                             </div>
                            
                          </div>
+
                           <div class="bg-indigo-800/50 p-4 rounded-xl border border-indigo-700 gap-4 pl-8 animate-in slide-in-from-top-2">
                             <!-- NUEVO: Asesorías de NNyA Civil -->
-                            <label class="text-[14px] text-white uppercase font-bold flex items-center cursor-pointer mb-3 hover:text-white transition-colors">
-                                <input type="checkbox" 
-                                    [checked]="formData.destinoLegal.includes('asesoria_civil')" 
-                                    (change)="handleCheckboxList('destinoLegal', 'asesoria_civil')" 
-                                    class="text-white border-indigo-400 focus:ring-0">
+                            <label class="flex items-center cursor-pointer">
+                                <input type="checkbox" [disabled]="isReadOnly" [checked]="formData.destinoLegal.includes('civil')" (change)="handleCheckboxList('destinoLegal', 'civil')" class="w-5 h-5 rounded text-white border-indigo-400 focus:ring-0">
                                 <span class="ml-3 font-bold">Asesorías de NNyA Civil</span>
                             </label>
-
                             <!-- NUEVO: Asesorías de NNyA Penal -->
-                            <label class="text-[14px] text-white uppercase font-bold flex items-center cursor-pointer mb-3 hover:text-white transition-colors">
-                                <input type="checkbox" 
-                                    [checked]="formData.destinoLegal.includes('asesoria_penal')" 
-                                    (change)="handleCheckboxList('destinoLegal', 'asesoria_penal')" 
-                                    class="text-white border-indigo-400 focus:ring-0">
+                            <label class="flex items-center cursor-pointer">
+                                <input type="checkbox" [disabled]="isReadOnly" [checked]="formData.destinoLegal.includes('penal')" (change)="handleCheckboxList('destinoLegal', 'penal')" class="w-5 h-5 rounded text-white border-indigo-400 focus:ring-0">
                                 <span class="ml-3 font-bold">Asesorías de NNyA Penal</span>
                             </label>
-                            </div>
+                         </div>
                      </div>
                 </div>
             </div>
         </div>
+
+        <!-- MANTÉN TODO EL HTML DEL PASO 5 QUE TENÍAS DE CONCLUSIONES Y DATOS JUDICIALES -->
+        <!-- (Reutiliza el código de Conclusión con la caja Judicial azul marino que armamos antes) -->
     </section>
-  
-    <!-- Controls -->
-     <div class="pt-16 border-t border-slate-100 flex justify-between no-print items-center mt-20">
+
+
+    <!-- ================================================================ -->
+    <!-- Modal Historial Oculto -->
+    <!-- ================================================================ -->
+    <div *ngIf="showHistoryModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 no-print">
+       <!-- Pega exactamente el código del modal que te pase antes para que lo abarque todo de forma flotante global -->
+       <div class="bg-white rounded-[32px] shadow-2xl border border-slate-200 max-w-2xl w-full overflow-hidden animate-in zoom-in-95 duration-300">
+           <div class="p-6 text-white flex justify-between items-center" [class.bg-blue-600]="selectedHistoricIntervention.tipo === 1" [class.bg-purple-600]="selectedHistoricIntervention.tipo === 2" [class.bg-emerald-600]="selectedHistoricIntervention.tipo === 3">
+               <div>
+                   <h4 class="text-lg font-black tracking-tight">{{ selectedHistoricIntervention.tipo === 1 ? 'Evolución Familiar Guardada' : (selectedHistoricIntervention.tipo === 2 ? 'Evolución Psicología Guardada' : 'Evolución Médica Guardada') }}</h4>
+                   <p class="text-xs text-white/80 font-bold mt-1">Registrado el día: {{ selectedHistoricIntervention.fecha }}</p>
+               </div>
+               <button (click)="cerrarModalHistorico()" class="text-white hover:text-slate-200 text-xl font-bold cursor-pointer">✕</button>
+           </div>
+           <div class="p-8 space-y-6">
+               <div><span class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Técnica / Modalidad utilizada</span><p class="text-sm font-bold text-slate-700">{{ selectedHistoricIntervention.tecnica === 1 ? 'Hora de Juego' : (selectedHistoricIntervention.tecnica === 2 ? 'Entrevista con Adolescente' : 'No específica / Estándar') }}</p></div>
+               <div><span class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Detalle de lo escrito en esta fecha</span><div class="bg-slate-50 p-6 rounded-2xl border border-slate-200 max-h-80 overflow-y-auto shadow-inner"><p class="text-slate-800 text-sm font-medium leading-relaxed whitespace-pre-line">{{ selectedHistoricIntervention.observaciones }}</p></div></div>
+           </div>
+           <div class="bg-slate-50 p-4 border-t border-slate-100 flex justify-end">
+               <button (click)="cerrarModalHistorico()" class="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-black uppercase rounded-xl transition-all cursor-pointer">Cerrar Lectura</button>
+           </div>
+       </div>
+    </div>
+
+
+    <!-- ================================================================ -->
+    <!-- Controles Inferiores y Botoneras de Avanzar (Lógica para 11 pasos) -->
+    <!-- ================================================================ -->
+    <div class="pt-16 border-t border-slate-100 flex justify-between no-print items-center mt-20">
       
-        <button [disabled]="activeStep === 0" (click)="prevStep()" [class.opacity-50]="activeStep===0" class="flex items-center px-10 py-4 rounded-3xl font-black text-xs uppercase bg-slate-100 text-slate-800">
-        Anterior
-      </button>
-
-<!-- NUEVO: BOTÓN GUARDAR PROGRESO (Disponible en todos los pasos) -->
-      <button (click)="guardarPasoActual()" 
-              [disabled]="buscandoPaciente"
-              class="px-8 py-4 bg-indigo-50 border-2 border-indigo-200 text-indigo-700 hover:bg-indigo-100 rounded-3xl font-black text-xs uppercase shadow-md flex items-center transition-all">
-          <span *ngIf="!buscandoPaciente">💾 Guardar Progreso</span>
-          <span *ngIf="buscandoPaciente" class="animate-pulse">Guardando...</span>
-      </button>
-
-      <div class="flex items-center space-x-3">
-        <div *ngFor="let step of [0,1,2,3,4,5]; let i=index" [class]="activeStep === i ? 'w-12 bg-indigo-600 shadow-lg shadow-indigo-200' : 'w-3 h-3 bg-slate-200'" class="rounded-full transition-all duration-500 h-3"></div>
+        <!-- Botón Anterior -->
+        <button [disabled]="activeStep === 0" (click)="prevStep()" [class.opacity-50]="activeStep===0" class="flex items-center px-6 py-3 rounded-2xl font-black text-xs uppercase bg-slate-100 text-slate-800 transition-all hover:bg-slate-200">
+          Anterior
+        </button>
+        
+        <!-- Guardar Progreso (Solo Editores 1197 o 1364) -->
+        <button *ngIf="canEdit" (click)="guardarPasoActual()" [disabled]="buscandoPaciente" class="px-6 py-3 bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 rounded-2xl font-black text-xs uppercase shadow-sm flex items-center transition-all disabled:opacity-50">
+            <span *ngIf="!buscandoPaciente">💾 Guardar</span>
+            <span *ngIf="buscandoPaciente" class="animate-pulse">⏳...</span>
+        </button>
+  
+        <!-- Puntos Visuales para Steps grandes -->
+        <div class="hidden lg:flex items-center space-x-1.5 overflow-hidden">
+          <div *ngFor="let step of [0,1,2,3,4,5,6,7,8,9,10]; let i=index" [class]="activeStep === i ? 'w-8 bg-indigo-600 shadow-md' : 'w-2 h-2 bg-slate-200'" class="rounded-full transition-all duration-300 h-2"></div>
+        </div>
+  
+        <!-- Botones Finales: Siguiente / Guardar o Solo Imprimir -->
+        <button *ngIf="activeStep < 10" (click)="nextStep()" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-xs uppercase shadow-lg transition-all flex items-center">
+            Siguiente <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </button>
+        
+        <!-- Action Final (Paso 10 - Editores vs Solo Lectura) -->
+        <button *ngIf="canEdit && activeStep === 10" (click)="triggerPrint()" class="px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-sm uppercase shadow-xl transition-all flex items-center">
+            ✔ Guardar Final e Imprimir
+        </button>
+        
+        <button *ngIf="isReadOnly && activeStep === 10" (click)="triggerPrint()" class="px-8 py-4 bg-blue-500 hover:bg-blue-600 text-white rounded-2xl font-black text-sm uppercase shadow-xl transition-all">
+            🖨️ Imprimir Lectura
+        </button>
       </div>
 
-      <button *ngIf="activeStep < 5" (click)="nextStep()" class="px-12 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-3xl font-black text-xs uppercase shadow-xl transition-all">Siguiente Paso</button>
-      <button *ngIf="canEdit && activeStep === 5" 
-        (click)="triggerPrint()" class="px-12 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-3xl font-black text-xs uppercase shadow-xl transition-all">Guardar e Imprimir</button>
-        <button *ngIf="isReadOnly && activeStep === 5" 
-        (click)="toDate()" 
-        onclick="window.print()"
-        class="px-12 py-4 bg-blue-500 hover:bg-blue-600 text-white rounded-3xl font-black text-xs uppercase shadow-xl transition-all">
-  Imprimir Vista
-</button>
-    </div>
+</div>
+
+
+
    <!-- ============================================================== -->
 <!-- REPORTE DE IMPRESIÓN COMPLETO (SOLO VISIBLE AL IMPRIMIR)       -->
 <!-- ============================================================== -->
@@ -1471,18 +1438,41 @@
         </div>
         <div class="text-right">
             <p class="text-xs font-bold">Fecha de Impresión: {{toDate() | date:'dd/MM/yyyy'}}</p>
-            <p class="text-xs">ID Historia: {{formData.idHistoria || 'N/A'}}</p>
+            
         </div>
     </div>
 
     <!-- I. PROFESIONALES -->
+   
     <div class="report-section mb-6">
         <h3 class="font-bold border-b border-black mb-2 uppercase text-sm">I. Equipo Interviniente</h3>
-        <div class="grid grid-cols-4 gap-4">
-            <div><span class="report-label">Médico/a:</span> <span class="report-value">{{formData.medicoInterviniente}}</span></div>
-            <div><span class="report-label">Trabajador/a Social:</span> <span class="report-value">{{formData.trabajadorSocial}}</span></div>
-            <div><span class="report-label">Psicólogo/a:</span> <span class="report-value">{{formData.psicologo}}</span></div>
-            <div><span class="report-label">Enfermero/a:</span> <span class="report-value">{{formData.enfermero}}</span></div>
+        
+        <!-- Usamos un Grid de 2 columnas para que quede prolijo en el papel A4 -->
+        <div class="grid grid-cols-2 gap-y-4 gap-x-8">
+            <div *ngIf="formData.equipo.medico > 0">
+                <span class="report-label">Médico/a:</span> 
+                <span class="report-value">{{ getNombreProfesional(formData.equipo.medico) }}</span>
+            </div>
+            
+            <div *ngIf="formData.equipo.psicologo > 0">
+                <span class="report-label">Psicólogo/a:</span> 
+                <span class="report-value">{{ getNombreProfesional(formData.equipo.psicologo) }}</span>
+            </div>
+            
+            <div *ngIf="formData.equipo.trabajadorSocial > 0">
+                <span class="report-label">Trabajo Social:</span> 
+                <span class="report-value">{{ getNombreProfesional(formData.equipo.trabajadorSocial) }}</span>
+            </div>
+            
+            <div *ngIf="formData.equipo.enfermero > 0">
+                <span class="report-label">Enfermero/a:</span> 
+                <span class="report-value">{{ getNombreProfesional(formData.equipo.enfermero) }}</span>
+            </div>
+        </div>
+        
+        <!-- Si no seleccionó ninguno, mostramos un aviso en el PDF -->
+        <div *ngIf="formData.equipo.medico === 0 && formData.equipo.psicologo === 0 && formData.equipo.trabajadorSocial === 0 && formData.equipo.enfermero === 0" class="text-sm italic">
+            No se declararon profesionales intervinientes en esta sesión.
         </div>
     </div>
 

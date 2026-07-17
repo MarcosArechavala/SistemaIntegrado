@@ -1,0 +1,46 @@
+<div class="min-h-[calc(100vh-64px)] bg-[#f1f5f9] p-6 lg:p-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div class="max-w-6xl mx-auto">
+        
+        <!-- Saludo -->
+        <div class="mb-10">
+            <h1 class="text-3xl lg:text-4xl font-black text-slate-800 tracking-tight">Bienvenido/a, {{nombreUsuario}}</h1>
+            <p class="text-slate-500 mt-2 font-medium">Seleccione el módulo al que desea ingresar.</p>
+        </div>
+
+        <!-- Grilla de Tarjetas -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+            <!-- TARJETA SAINNAVV -->
+            <div (click)="navegar('medical-form')" 
+                 [class.opacity-50]="!tieneAccesoSainnavv()"
+                 class="bg-white rounded-[32px] p-8 shadow-xl shadow-slate-200/50 border border-slate-100 cursor-pointer transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:border-indigo-300 group">
+                
+                <div class="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                    <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
+                </div>
+                <h2 class="text-2xl font-black text-slate-800 mb-3 group-hover:text-indigo-600 transition-colors">Módulo SAINNAVV</h2>
+                <p class="text-sm text-slate-500 leading-relaxed font-medium">Abordaje Integral de Niñez y Adolescencia. Registro de admisiones, intervenciones clínicas y evoluciones.</p>
+                
+                <div class="mt-8 flex items-center text-indigo-600 font-bold text-sm">
+                    Ingresar al módulo <svg class="w-4 h-4 ml-2 group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                </div>
+            </div>
+
+            <!-- TARJETA LABORATORIO -->
+            <div (click)="navegar('laboratorio')" 
+                 class="bg-white rounded-[32px] p-8 shadow-xl shadow-slate-200/50 border border-slate-100 cursor-pointer transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:border-emerald-300 group">
+                
+                <div class="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                    <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg> <!-- Puedes cambiar este SVG por un microscopio/tubo de ensayo luego -->
+                </div>
+                <h2 class="text-2xl font-black text-slate-800 mb-3 group-hover:text-emerald-600 transition-colors">Módulo Laboratorio</h2>
+                <p class="text-sm text-slate-500 leading-relaxed font-medium">Gestión y visualización de análisis clínicos, pedidos y resultados de laboratorio del paciente.</p>
+                
+                <div class="mt-8 flex items-center text-emerald-600 font-bold text-sm">
+                    Ingresar al módulo <svg class="w-4 h-4 ml-2 group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

@@ -6,9 +6,11 @@ export const authGuard: CanActivateFn = (route, state) => {
   const router = inject(Router);
   const platformId = inject(PLATFORM_ID);
 
+  // Si se ejecuta en el servidor (SSR), permitimos pasar
   if (!isPlatformBrowser(platformId)) return true; 
 
   const rawUser = localStorage.getItem('usuarioAHS');
+
   if (!rawUser) {
     router.navigate(['/login']);
     return false;
@@ -17,26 +19,31 @@ export const authGuard: CanActivateFn = (route, state) => {
   try {
     const userData = JSON.parse(rawUser);
     
-    // --- NUEVA LÓGICA DE VALIDACIÓN ---
+    // 1. Obtenemos los códigos exigidos por la página a la que quiere entrar
+    const codigosPermitidos: string[] = route.data['codigosPermitidos'];
 
-    // 1. Códigos de la lista de permisos (si hubiera)
+    // =========================================================================
+    // LA SOLUCIÓN: Si la ruta no exige ningún código (Como el DASHBOARD), 
+    // lo dejamos pasar automáticamente porque ya está logueado.
+    // =========================================================================
+    if (!codigosPermitidos || codigosPermitidos.length === 0) {
+      return true;
+    }
+
+    // 2. Extraemos los códigos que tiene el usuario
     const listaPermisos: string[] = userData.permisos ? userData.permisos.map((p: any) => p.accesos.toString().trim()) : [];
-
-    // 2. El código principal del usuario (el 1364 que viene en result)
     const codigoMaestro = userData.codigoUsuario ? userData.codigoUsuario.toString().trim() : '';
 
-    // 3. Códigos que la ruta permite (ej: ['1197', '1364', '79'])
-    const codigosPermitidos: string[] = route.data['codigosPermitidos'] || [];
-
-    // Verificamos si el CÓDIGO MAESTRO está permitido O si está en la LISTA de permisos
+    // 3. Verificamos si tiene acceso
     const tieneAcceso = codigosPermitidos.includes(codigoMaestro) || 
-                        listaPermisos.some(cp => codigosPermitidos.includes(cp));
+                        listaPermisos.some((codigo: string) => codigosPermitidos.includes(codigo));
 
     if (tieneAcceso) {
       return true;
     } else {
-      alert('Acceso denegado: Su código de usuario (' + codigoMaestro + ') no tiene permiso para este módulo.');
-      router.navigate(['/login']); 
+      alert('Acceso denegado: Su usuario no cuenta con el permiso para ingresar a este módulo.');
+      // Lo mandamos al Dashboard en vez de cerrar su sesión
+      router.navigate(['/dashboard']); 
       return false;
     }
   } catch (e) {

@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { finalize } from 'rxjs/operators'; // <--- LA HERRAMIENTA CLAVE
+import { finalize } from 'rxjs/operators'; 
 
 @Component({
   selector: 'app-login',
@@ -37,7 +37,7 @@ export class LoginComponent {
     // 2. Prender el Loading en el Botón HTML
     this.isLoading = true;
 
-    const url = '/api/auth/iniciar-sesion';
+    const url = 'http://localhost:5000/auth/iniciar-sesion';
     const body = {
       usuario: this.credentials.username,
       clave: this.credentials.password
@@ -68,7 +68,7 @@ export class LoginComponent {
             else {
                 // LOGEO EXITOSO
                 localStorage.setItem('usuarioAHS', JSON.stringify(finalData));
-                this.router.navigate(['/medical-form']); 
+                 this.router.navigate(['/dashboard']); 
             }
           } catch(e) {
             this.errorMessage = "Se interrumpió la respuesta del sistema central.";

@@ -24,10 +24,12 @@ export interface FormState {
    idUsuario?: number;
    idProfesionalTurno: 0,
   // Profesionales 
-  medicoInterviniente: string;
-  trabajadorSocial: string;
-  psicologo: string;
-  enfermero: string;
+  equipo: {
+    medico: number;
+    trabajadorSocial: number;
+    psicologo: number;
+    enfermero: number;
+  };
   medicoForense: string;
   // Datos Paciente
   nombreApellido: string;

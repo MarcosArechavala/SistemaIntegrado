@@ -99,7 +99,7 @@ export class SocialServiceComponent {
     this.loading = true;
     console.log(`🔎 Buscando: ${valor}...`);
 
-    const url = `/api/HistoriaClinica/buscar-paciente?tipo=${tipo}&valor=${valor}`;
+    const url = `http://localhost:5000/HistoriaClinica/buscar-paciente?tipo=${tipo}&valor=${valor}`;
 
     this.http.get(url).subscribe({
       next: (response: any) => {
