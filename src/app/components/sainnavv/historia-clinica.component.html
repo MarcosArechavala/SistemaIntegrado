@@ -94,121 +94,173 @@
         ::-webkit-scrollbar { display: none; }
     }
 </style>
-
-
-
-<div class="space-y-12">
-  
-    <!-- STEP 0: Identificación -->
-    <section *ngIf="activeStep === 0" class="animate-in fade-in slide-in-from-bottom-6 duration-500">
-
-       <div class="mb-12 border-t border-slate-100 pt-12">
-        <h2 class="text-2xl font-black text-slate-900 mb-6">Datos del Paciente</h2>
-        <!-- Buscador de Pacientes -->
-      <div class="mb-8 bg-indigo-50 p-6 rounded-3xl border border-indigo-100 shadow-sm animate-in slide-in-from-top-4">
-        <h3 class="text-sm font-black text-indigo-900 uppercase tracking-widest mb-4 flex items-center">
-             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
-             Importar Paciente desde Sistema 
+<!-- ========================================================================= -->
+<!-- VISTA 1: BUSCADOR Y SELECCIÓN DE EPISODIO -->
+<!-- ========================================================================= -->
+<div *ngIf="vistaActual === 'buscador'" class="max-w-5xl mx-auto space-y-6 animate-in fade-in zoom-in-95 mt-10">
+    
+    <!-- Panel de Búsqueda de Pacientes -->
+    <div class="bg-indigo-50 p-8 rounded-[32px] border border-indigo-100 shadow-sm">
+        <h3 class="text-sm font-black text-indigo-900 uppercase tracking-widest mb-6 flex items-center">
+             <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+             Buscar Paciente en Sistema
         </h3>
         
-   <div class="flex flex-col md:flex-row gap-4">
+        <div class="flex flex-col md:flex-row gap-4">
             <!-- Selector Tipo -->
             <div class="md:w-1/4">
-                <select #tipoBusqueda [disabled]="isReadOnly" class="w-full p-3 bg-white border border-indigo-200 rounded-xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500">
+                <select #tipoBusqueda class="w-full p-4 bg-white border-2 border-indigo-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
                     <option value="dni">Por D.N.I.</option>
                     <option value="hc">Por Historia Clínica</option>
                 </select>
             </div>
+            
+            <!-- Input Valor -->
+            <div class="md:w-2/4">
+                <input #valorBusqueda 
+                       (keyup.enter)="buscarPaciente(tipoBusqueda.value, valorBusqueda.value)"
+                       placeholder="Ingrese número sin puntos..." 
+                       class="w-full p-4 bg-white border-2 border-indigo-200 rounded-2xl font-black text-slate-800 outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder-indigo-300">
+            </div>
 
-             <div *ngIf="formData.idPaciente && formData.idPaciente > 0" class="bg-white p-8 rounded-[32px] shadow-xl border border-slate-200">
+            <!-- Botón de Búsqueda -->
+            <div class="md:w-1/4">
+                <button (click)="buscarPaciente(tipoBusqueda.value, valorBusqueda.value)" 
+                        [disabled]="buscandoPaciente"
+                        class="w-full h-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-black rounded-2xl transition-all shadow-lg flex items-center justify-center">
+                    <span *ngIf="!buscandoPaciente" class="flex items-center uppercase text-sm tracking-wider">Buscar Datos</span>
+                    <span *ngIf="buscandoPaciente" class="flex items-center animate-pulse uppercase text-sm tracking-wider">
+                        <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        Buscando...
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resultados: Grilla de Episodios (Aparece al buscar un paciente) -->
+    <div *ngIf="formData.idPaciente && formData.idPaciente > 0" class="bg-white p-8 rounded-[32px] shadow-xl border border-slate-200 animate-in slide-in-from-top-4">
         
-        <!-- Tarjeta Resumen del Paciente -->
-        <div class="flex items-center gap-4 p-4 bg-indigo-50 border border-indigo-100 rounded-2xl mb-8">
-            <div class="w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center font-black text-xl">
+        <!-- Tarjeta Resumen del Paciente Encontrado -->
+        <div class="flex items-center gap-4 p-5 bg-gradient-to-r from-indigo-50 to-white border-l-4 border-indigo-500 rounded-2xl mb-8">
+            <div class="w-14 h-14 bg-indigo-600 text-white rounded-2xl flex items-center justify-center font-black text-2xl shadow-md">
                 {{formData.nombreApellido.charAt(0)}}
             </div>
             <div>
-                <h3 class="text-lg font-black text-indigo-900">{{formData.nombreApellido}}</h3>
-                <p class="text-sm font-bold text-indigo-600">DNI: {{formData.dni}} | Edad: {{formData.edad}} años</p>
+                <h3 class="text-xl font-black text-slate-800">{{formData.nombreApellido}}</h3>
+                <p class="text-sm font-bold text-slate-500 mt-1">
+                    <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded">DNI: {{formData.dni}}</span> 
+                    <span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded ml-2">Edad: {{formData.edad}} años</span>
+                </p>
             </div>
         </div>
 
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-black text-slate-800">Episodios / Atenciones</h3>
-            <button (click)="iniciarNuevoEpisodio()" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition-all flex items-center">
+        <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
+            <h3 class="text-lg font-black text-slate-800 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002 2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                Episodios y Atenciones Previas
+            </h3>
+            <button (click)="iniciarNuevoEpisodio()" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-200 transition-all flex items-center uppercase text-xs tracking-wider">
                 <span class="text-lg mr-2">+</span> NUEVO EPISODIO
             </button>
         </div>
 
-        <!-- Grilla -->
+        <!-- Grilla de Episodios -->
         <div class="overflow-x-auto border border-slate-200 rounded-2xl">
-            <table class="w-full text-left text-sm">
-                <thead class="bg-slate-100 text-slate-500 font-black uppercase text-[10px] tracking-widest">
+            <table class="w-full text-left text-sm whitespace-nowrap">
+                <thead class="bg-slate-50 text-slate-500 font-black uppercase text-[10px] tracking-widest border-b border-slate-200">
                     <tr>
                         <th class="p-4">ID</th>
-                        <th class="p-4">Fecha Inicio</th>
+                        <th class="p-4">Fecha de Ingreso</th>
                         <th class="p-4">Motivo Principal</th>
                         <th class="p-4">Estado</th>
                         <th class="p-4 text-right">Acción</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr *ngFor="let ep of episodiosPaciente" class="border-t border-slate-100 hover:bg-slate-50 transition-colors">
+                    <tr *ngFor="let ep of episodiosPaciente" class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                         <td class="p-4 font-bold text-slate-700">#{{ep.idEpisodio}}</td>
-                        <td class="p-4 font-medium">{{ep.fecha}}</td>
-                        <td class="p-4 text-slate-600">{{ep.motivo}}</td>
+                        <td class="p-4 font-medium text-slate-600">{{ep.fecha}}</td>
+                        <td class="p-4 text-slate-600 truncate max-w-[200px]" title="{{ep.motivo}}">{{ep.motivo}}</td>
                         <td class="p-4">
-                            <span class="px-3 py-1 bg-amber-100 text-amber-700 font-bold text-[10px] uppercase rounded-full">
+                            <span class="px-3 py-1 bg-indigo-100 text-indigo-700 font-bold text-[10px] uppercase rounded-lg">
                                 {{ep.estado}}
                             </span>
                         </td>
                         <td class="p-4 text-right">
-                            <button (click)="continuarEpisodio(ep)" class="px-4 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-bold rounded-lg transition-all text-xs">
-                                Continuar Carga ➡
+                            <button (click)="continuarEpisodio(ep)" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-lg transition-all text-xs flex items-center justify-end ml-auto">
+                                Continuar Carga <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                             </button>
                         </td>
                     </tr>
                     <tr *ngIf="episodiosPaciente.length === 0">
                         <td colspan="5" class="p-8 text-center text-slate-400 font-medium italic">
-                            No hay episodios previos. Inicie uno nuevo.
+                            No hay episodios previos registrados en el sistema. Haga clic en "NUEVO EPISODIO" para comenzar.
                         </td>
                     </tr>
                 </tbody>
             </table>
         </div>
     </div>
-            
-            <!-- Input Valor (Limpio, solo busca al dar ENTER) -->
-            <div class="md:w-2/4">
-                <input #valorBusqueda 
-                       (keyup.enter)="buscarPaciente(tipoBusqueda.value, valorBusqueda.value)"
-                       placeholder="Ingrese número sin puntos..." 
-                       
-                       class="w-full p-3 bg-white border border-indigo-200 rounded-xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500 placeholder-indigo-300">
-            </div>
+</div>
 
-            <!-- Botón -->
-            <div class="md:w-1/4">
-                <button (click)="buscarPaciente(tipoBusqueda.value, valorBusqueda.value)" 
-                        
-                        class="w-full h-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all shadow-md flex items-center justify-center">
-                    
-                    <span *ngIf="!buscandoPaciente" class="flex items-center">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
-                        BUSCAR
-                    </span>
+<!-- ========================================================================= -->
+<!-- VISTA 2: EL FORMULARIO MÉDICO (SAINNAVV) -->
+<!-- ========================================================================= -->
+<div *ngIf="vistaActual === 'formulario'" class="space-y-12 animate-in fade-in zoom-in-95 duration-300">
+    
+    <!-- Botón Volver (Fuera de los steps) -->
+    <div class="mb-2 no-print">
+        <button (click)="volverAlBuscador()" class="text-sm font-black text-indigo-600 hover:text-indigo-800 hover:underline flex items-center bg-white px-4 py-2 rounded-lg shadow-sm border border-indigo-100 w-fit transition-all">
+           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+           Volver a selección de episodios
+        </button>
+    </div>
 
-                    <span *ngIf="buscandoPaciente" class="flex items-center animate-pulse">
-                        <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                        Cargando...
-                    </span>
-                </button>
+    <!-- STEP 0: Identificación -->
+    <section *ngIf="activeStep === 0" class="animate-in fade-in slide-in-from-bottom-6 duration-500">
+        
+        <div class="mb-12">
+            <h2 class="text-2xl font-black text-slate-900 mb-2">Identificación del Paciente</h2>
+            <p class="text-slate-500 text-sm">Datos demográficos y equipo profesional asignado</p>
+        </div>
+
+        <!-- EQUIPO INTERVINIENTE DEL EPISODIO -->
+        <div class="mb-12 bg-slate-50 p-6 rounded-[32px] border border-slate-200">
+            <h3 class="text-sm font-black text-slate-700 uppercase tracking-widest mb-6 flex items-center border-b border-slate-200 pb-3">
+                <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                Equipo Interviniente del Episodio
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="group">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Médico/a</label>
+                    <select [(ngModel)]="formData.equipo.medico" [disabled]="isReadOnly" class="w-full p-3 bg-white border-2 border-slate-200 rounded-xl font-bold text-sm text-slate-700 outline-none focus:border-indigo-500">
+                        <option value="">-- Seleccionar Profesional --</option>
+                        <option *ngFor="let p of profesionalesServicio" [value]="p.idProfesional">{{p.apellido}} {{p.nombreProf}}</option>
+                    </select>
+                </div>
+                <div class="group">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Psicólogo/a</label>
+                    <select [(ngModel)]="formData.equipo.psicologo" [disabled]="isReadOnly" class="w-full p-3 bg-white border-2 border-slate-200 rounded-xl font-bold text-sm text-slate-700 outline-none focus:border-indigo-500">
+                        <option value="">-- Seleccionar Profesional --</option>
+                        <option *ngFor="let p of profesionalesServicio" [value]="p.idProfesional">{{p.apellido}} {{p.nombreProf}}</option>
+                    </select>
+                </div>
+                <div class="group">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Trabajador/a Social</label>
+                    <select [(ngModel)]="formData.equipo.trabajadorSocial" [disabled]="isReadOnly" class="w-full p-3 bg-white border-2 border-slate-200 rounded-xl font-bold text-sm text-slate-700 outline-none focus:border-indigo-500">
+                        <option value="">-- Seleccionar Profesional --</option>
+                        <option *ngFor="let p of profesionalesServicio" [value]="p.idProfesional">{{p.apellido}} {{p.nombreProf}}</option>
+                    </select>
+                </div>
             </div>
         </div>
-        <p class="mt-3 text-[10px] text-indigo-400 font-medium ml-1">* Al encontrar el paciente, los campos de identificación y grupo familiar se completarán automáticamente.</p>
-      </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        <div class="mb-12 border-t border-slate-100 pt-8">
+            <h2 class="text-lg font-black text-slate-800 mb-6">Datos Personales Base</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- INICIA TU CÓDIGO ORIGINAL DE INPUTS DEL PACIENTE AQUÍ -->
+                <!-- Nombre, DNI, Fecha Nacimiento, Teléfonos, Obra Social, etc. -->
             
             
            <!-- Nombre y Apellido -->

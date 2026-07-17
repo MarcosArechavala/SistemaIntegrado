@@ -223,6 +223,10 @@ export class MedicalFormComponent {
             this.cargarEpisodiosDelPaciente(this.formData.idPaciente ?? 0);
         }
 
+           this.cargarHistorialIntervenciones();
+      
+      // Auto-foco al nombre del paciente
+      setTimeout(() => document.getElementById('inputNombrePaciente')?.focus(), 100);
         // Nos aseguramos de quedarnos en la vista del buscador para ver la grilla
         this.vistaActual = 'buscador';
         this.cdr.detectChanges(); 
